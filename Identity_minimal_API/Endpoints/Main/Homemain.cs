@@ -6,12 +6,14 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.RegularExpressions;
 
 public static class HomeMainEndpoints
 {
     public static IEndpointRouteBuilder MapHomemainEndpoints(this IEndpointRouteBuilder app, WebApplicationBuilder builder)
     {
-        app.MapGet("/auth", [Authorize] (HttpContext context) =>
+        app.MapGet("/", () => "Welcome").WithGroupName("Main");
+        app.MapGet("/Endpoints/Main/Homemain/auth", [Authorize] (HttpContext context) =>
         {
             //จุดสังเกตการเรียกใช้งานคือ ClaimTypes ดึงมาจาก GET ในส่วนของ Login ซึ่งจะเก็บสิทธ์การเข้าถึงไว้ทั้งหมด และการเรียกใช้นั้นสามารถแสดงได้ทั้ง ประเภทและ ค่าของตัวมันเองได้ โดยการ .ตามด้วยตัวแปลที่สร้างขึ้นมา
             var full = context.User.FindFirst(ClaimTypes.Name)?.Value;
@@ -20,10 +22,12 @@ public static class HomeMainEndpoints
             var sn = context.User.FindFirst(ClaimTypes.Surname)?.Value;
             var un = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             return Results.Ok($"Authenticated: {full} : {un} : {n} : {gn} : {sn}");
-        }).WithGroupName("Main");
+        })
+        .WithDescription("ทดสอบระบบAuth")
+        .WithGroupName("Main");
 
         // อ็อบเจกต์ที่เก็บข้อมูลตัวตนของผู้ใช้(Identity) และสิทธิ์ต่างๆ(Claims) หลังจากผ่านการล็อกอินสำเร็จ
-        app.MapGet("/userclaim", [Authorize] (ClaimsPrincipal user) =>
+        app.MapGet("/Endpoints/Main/Homemain/userclaim", [Authorize] (ClaimsPrincipal user) =>
         {
             // สร้างตัวแปร string เพื่อเก็บข้อมูลของผู้ใช้
             string uInfo = user.Identity?.Name ?? "...";
@@ -41,9 +45,11 @@ public static class HomeMainEndpoints
 
             return Results.Ok(uInfo);
             // ส่งค่าข้อมูลทั้งหมดกลับในรูปแบบ HTTP 200 OK พร้อมกับข้อความ uInfo
-        }).WithGroupName("Main");
+        })
+        .WithDescription("ระบบเช็คสิทธ์ย่อย")
+        .WithGroupName("Main");
 
-        app.MapGet("/userroles", [Authorize] (ClaimsPrincipal user) =>
+        app.MapGet("/Endpoints/Main/Homemain/userroles", [Authorize] (ClaimsPrincipal user) =>
         {
             string roleInfo = "Roles: ";
             // ดึงเฉพาะ Claims ที่เป็น Role
@@ -56,48 +62,57 @@ public static class HomeMainEndpoints
 
             return Results.Ok(roleInfo);
             // ส่งข้อมูล Roles กลับในรูปแบบ HTTP 200 OK
-        }).WithGroupName("Main");
+        })
+        .WithDescription("ระบบเช็คสิทธ์หลัก")
+        .WithGroupName("Main");
 
-        app.MapGet("/admin_only", [Authorize(Roles = "admin")] () => "คุณคือ admin").WithGroupName("Main");
-        app.MapGet("/hero_or_admin", [Authorize(Roles = "admin,hero")] () => "คุณเป็นทั้ง admin และ Hero").WithGroupName("Main");
+        //app.MapGet("/admin_only", [Authorize(Roles = "admin")] () => "คุณคือ admin").WithGroupName("Main");
+        //app.MapGet("/hero_or_admin", [Authorize(Roles = "admin,hero")] () => "คุณเป็นทั้ง admin และ Hero").WithGroupName("Main");
 
-        // กำหนดเส้นทาง (route) `/reset` สำหรับการรีเซ็ตรหัสผ่าน
-        app.MapGet("/reset", async (UserManager<IdenUser> userManager) =>
-        {
-            // ค้นหาผู้ใช้งานที่มีชื่อ "admin" ในฐานข้อมูล
-            var item = await userManager.FindByNameAsync("admin");
+        //// กำหนดเส้นทาง (route) `/reset` สำหรับการรีเซ็ตรหัสผ่าน
+        //app.MapGet("/reset", async (UserManager<IdenUser> userManager) =>
+        //{
+        //    // ค้นหาผู้ใช้งานที่มีชื่อ "admin" ในฐานข้อมูล
+        //    var item = await userManager.FindByNameAsync("admin");
 
-            // หากไม่พบผู้ใช้งานชื่อ "admin" ให้ส่งสถานะ 404 Not Found พร้อมข้อความ
-            if (item == null)
-                return Results.NotFound("ไม่พบผู้ใช้งานชื่อนี้");
+        //    // หากไม่พบผู้ใช้งานชื่อ "admin" ให้ส่งสถานะ 404 Not Found พร้อมข้อความ
+        //    if (item == null)
+        //        return Results.NotFound("ไม่พบผู้ใช้งานชื่อนี้");
 
-            // ลบรหัสผ่านปัจจุบันของผู้ใช้งาน "admin"
-            await userManager.RemovePasswordAsync(item);
+        //    // ลบรหัสผ่านปัจจุบันของผู้ใช้งาน "admin"
+        //    await userManager.RemovePasswordAsync(item);
 
-            // กำหนดรหัสผ่านใหม่ให้กับผู้ใช้งาน "admin" เป็น "Ilink111!"
-            await userManager.AddPasswordAsync(item, "Ilink111!");
+        //    // กำหนดรหัสผ่านใหม่ให้กับผู้ใช้งาน "admin" เป็น "Ilink111!"
+        //    await userManager.AddPasswordAsync(item, "Ilink111!");
 
-            // ส่งสถานะ 200 OK กลับไปเมื่อการรีเซ็ตรหัสผ่านสำเร็จ
-            return Results.Ok();
+        //    // ส่งสถานะ 200 OK กลับไปเมื่อการรีเซ็ตรหัสผ่านสำเร็จ
+        //    return Results.Ok();
 
-        }).WithGroupName("Main");
+        //}).WithGroupName("Main");
 
         // หลังจากที่สร้าง admin มาแล้ว เราควรที่จะ Authorize เป็น admin
-        app.MapPost("/register", [Authorize(Roles = "admin, dev")]
+        app.MapPost("/Endpoints/Main/Homemain/register", [Authorize(Roles = "admin, dev")]
         async (UserManager<IdenUser> userManager, RoleManager<IdentityRole> roleManager, RegisterRequest user) =>
         {
-            // ทำการเช็คว่าชื่อและรหัสผ่านเป็นค่าว่างหรือไม่ จะแสดงข้อความ Bad ออกมา
-            if (user.username == null || user.password == null)
+            // ตรวจสอบว่าชื่อผู้ใช้และรหัสผ่านถูกป้อนครบหรือไม่
+            if (string.IsNullOrWhiteSpace(user.username) || string.IsNullOrWhiteSpace(user.password))
                 return Results.BadRequest("กรุณากรอกข้อมูลให้ครบถ้วน");
 
-            // หา User ใน DB 
+            // ตรวจสอบรูปแบบอีเมลให้ถูกต้อง
+            var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+            if (string.IsNullOrWhiteSpace(user.email) || !emailRegex.IsMatch(user.email))
+                return Results.BadRequest("รูปแบบอีเมลไม่ถูกต้อง");
+
+            // ค้นหาผู้ใช้ในฐานข้อมูล
             var u = await userManager.FindByNameAsync(user.username);
-            // กรณีหาสมัครแล้วชื่อตรงกับคนที่เคยสมัครก่อนจะแสดงข้อความ Bad ออกมา
             if (u != null)
                 return Results.BadRequest("มีผู้ใช้อยู่แล้ว");
 
+            // สร้างผู้ใช้ใหม่
             var newUser = new IdenUser
             {
+                Email = user.email,
+                NormalizedEmail = user.email.ToUpper(), // กำหนดค่าอัตโนมัติ
                 FullRealName = user.fullRealName,
                 UserName = user.username,
                 GivenName = user.givenName,
@@ -106,31 +121,35 @@ public static class HomeMainEndpoints
                 HRDepartmentId = user.hrdepartmentId,
                 HRDepartmentName = user.hrdepartmentName
             };
-            // ใช้ User ที่อินเจ็กเข้ามา ทำการสร้าง User ขึ้นมาโดยการนำ Oject newUser ทั้งหมดมายัดใส่
+
+            // ทำการสร้างบัญชีผู้ใช้
             var createUserResult = await userManager.CreateAsync(newUser, user.password);
-            // เช็คว่าผลลัพท์เป็นยังไง ถ้าไม่สำเร็จ จะแสดง Bad ออกมา
-            // ส่วนมากที่ไม่ผ่านจะเป็นไปทาง รหัสผ่านความปลอดภัยต่ำเกินไป
             if (!createUserResult.Succeeded)
-                return Results.BadRequest(createUserResult.ToString());
-            // User.roles มาจากการ Post เข้ามา
+                return Results.BadRequest("การสร้างบัญชีล้มเหลว: " + string.Join(", ", createUserResult.Errors.Select(e => e.Description)));
+
+            // กำหนด Role ให้ผู้ใช้
             foreach (var role in user.roles)
             {
-                // ทำการใช้ RoleManager ในการ CreateAsync ในการสร้าง Role ถ้า Role ไม่มี ก็จะทำการสร้างใน Db ใหม่ขึ้นมาเลย
                 if (!await roleManager.RoleExistsAsync(role))
                 {
                     var createRoleResult = await roleManager.CreateAsync(new IdentityRole(role));
+                    if (!createRoleResult.Succeeded)
+                        return Results.BadRequest("ไม่สามารถสร้าง Role ได้: " + string.Join(", ", createRoleResult.Errors.Select(e => e.Description)));
                 }
-                // ส่วนนี้จะทำการเอา User ไปประกบกับ Role คือ ตำแหน่งของผู้ใช้
+
                 await userManager.AddToRoleAsync(newUser, role);
             }
-            return Results.Ok();
 
-        }).WithGroupName("Main");
+            return Results.Ok("ลงทะเบียนสำเร็จ");
+
+        })
+        .WithDescription("ระบบสมัครสมาชิก")
+        .WithGroupName("Main");
 
         // API สำหรับการล็อกอิน (JWT Token)
-        app.MapPost("/login", [AllowAnonymous] async (UserManager<IdenUser> userManager, RoleManager<IdentityRole> roleMgrManager, LoginRequest user) =>
+        app.MapPost("/Endpoints/Main/Homemain/login", [AllowAnonymous] async (UserManager<IdenUser> userManager, RoleManager<IdentityRole> roleMgrManager, LoginRequest user) =>
         {
-            //เช็คว่าชื่อกับรหัสผ่านตรงกันไหม
+            // เช็คว่าชื่อกับรหัสผ่านตรงกันไหม
             var u = await userManager.FindByNameAsync(user.username);
             if (u == null)
                 return Results.NotFound("ไม่พบผู้ใช้งานชื่อนี้");
@@ -172,18 +191,20 @@ public static class HomeMainEndpoints
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddMinutes(1), // อายุ Token
-                Audience = builder.Configuration["Jwt:Audience"],
-                Issuer = builder.Configuration["Jwt:Issuer"],
+                Expires = DateTime.Now.AddMinutes(15),
+                Audience = builder.Configuration["Jwt:Audience"], // อันนี้ดึงมาจาก appsetting.json
+                Issuer = builder.Configuration["Jwt:Issuer"],// อันนี้ดึงมาจาก appsetting.json
                 SigningCredentials = credentials
             };
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
             var jwtToken = jwtTokenHandler.WriteToken(token);
             return Results.Ok(new LoginRespose(u.Id, user.username, jwtToken));
-        }).WithGroupName("Main");
+        })
+        .WithDescription("ระบบล็อคอิน")
+        .WithGroupName("Main");
 
         // สร้าง API Endpoint สำหรับ Refresh Token
-        app.MapPost("/refresh-token", [Authorize]
+        app.MapPost("/Endpoints/Main/Homemain/refresh-token", [Authorize]
         async (HttpContext httpContext, UserManager<IdenUser> userManager, IConfiguration config) =>
         {
             // ดึงข้อมูล Claims จาก Token ปัจจุบันที่ผู้ใช้ส่งมา
@@ -278,9 +299,11 @@ public static class HomeMainEndpoints
 
             // ส่ง Token ใหม่กลับไปยัง Client
             return Results.Ok(new { Message = "Token refreshed successfully.", Token = jwtToken });
-        }).WithGroupName("Main");
+        })
+        .WithDescription("ระบบต่ออายุ Token")
+        .WithGroupName("Main");
 
-        app.MapGet("/Get_Data", [Authorize] async (HttpContext httpContext, UserManager<IdenUser> userManager) =>
+        app.MapGet("/Endpoints/Main/Homemain/Get_Data", [Authorize] async (HttpContext httpContext, UserManager<IdenUser> userManager) =>
         {
             // ดึงข้อมูล UserId จาก HttpContext.User
             var userName = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -298,6 +321,7 @@ public static class HomeMainEndpoints
             return Results.Ok(new
             {
                 Id = user.Id,
+                Email = user.Email,
                 FullRealName = user.FullRealName,
                 GivenName = user.GivenName,
                 UserName = user.UserName,
@@ -318,9 +342,11 @@ public static class HomeMainEndpoints
                 Plan_DepPowerUserPermission = user.ListNumbers,
                 Plan_DepPowerUserPermission_HashSet = user.HashSetNumbers
             });
-        }).WithGroupName("Main");
+        })
+        .WithDescription("ดึงข้อมูลผู้ใช้")
+        .WithGroupName("Main");
 
-        app.MapGet("/Get_DataUserAll", [Authorize(Roles = "admin, dev")] (UserManager<IdenUser> userManager) =>
+        app.MapGet("/Endpoints/Main/Homemain/Get_DataUserAll", [Authorize(Roles = "admin, dev")] (UserManager<IdenUser> userManager) =>
         {
             // ดึงข้อมูลผู้ใช้ทั้งหมดจากฐานข้อมูล
             var users = userManager.Users.ToList();
@@ -333,6 +359,7 @@ public static class HomeMainEndpoints
             var result = users.Select(user => new
             {
                 Id = user.Id,
+                Email = user.Email,
                 HRDepartmentId = user.HRDepartmentId,
                 FullRealName = user.FullRealName,
                 GivenName = user.GivenName,
@@ -356,10 +383,12 @@ public static class HomeMainEndpoints
             });
 
             return Results.Ok(result);
-        }).WithGroupName("Main");
+        })
+        .WithDescription("ดึงข้อมูลผู้ใช้ทั้งหมด")
+        .WithGroupName("Main");
 
         // เพิ่ม ตำแหน่งเพิ่มได้เฉพราะ แอดมินเท่านั้น
-        app.MapPost("/AddRole", [Authorize(Roles = "admin")]
+        app.MapPost("/Endpoints/Main/Homemain/AddRole", [Authorize(Roles = "admin")]
         async (RoleManager<IdentityRole> roleManager, string rolename, string userId, UserManager<IdenUser> userManager) =>
         {
             var user = await userManager.FindByIdAsync(userId);
@@ -375,10 +404,12 @@ public static class HomeMainEndpoints
                 return Results.Ok();
             }
             return Results.Conflict();
-        }).WithGroupName("Main");
+        })
+        .WithDescription("เพิ่มสิทธ์เข้าถึง")
+        .WithGroupName("Main");
 
         // จุดสังเกต คือ วิธีการลบข้อมูลนั้นจำเป็นต้องใส่ id ของผู้ใช้ คนนั้นๆ 
-        app.MapDelete("/Delete User", [Authorize(Roles = "admin")] async (string id, UserManager<IdenUser> userManager) =>
+        app.MapDelete("/Endpoints/Main/Homemain/Delete User", [Authorize(Roles = "admin")] async (string id, UserManager<IdenUser> userManager) =>
         {
             // ค้นหาผู้ใช้จากฐานข้อมูลโดยใช้ Id
             var user = await userManager.FindByIdAsync(id);
@@ -396,7 +427,9 @@ public static class HomeMainEndpoints
             }
 
             return Results.Ok(new { message = "ลบผู้ใช้ สำรเร็จ" });
-        }).WithGroupName("Main");
+        })
+        .WithDescription("ระบบลบผู้ใช้งานตาม ID")
+        .WithGroupName("Main");
 
         return app;
     }

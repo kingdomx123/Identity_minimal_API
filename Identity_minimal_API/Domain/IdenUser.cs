@@ -6,6 +6,7 @@ namespace Identity_jwt.Domain
     public class IdenUser : IdentityUser
     {
         public int? HRDepartmentId { get; set; }
+        public new string Email { get; set; } = string.Empty;
         public string HRDepartmentName { get; set; } = "";
         public string FullRealName { get; set; } = "";
         public string PositionName { get; set; } = "";

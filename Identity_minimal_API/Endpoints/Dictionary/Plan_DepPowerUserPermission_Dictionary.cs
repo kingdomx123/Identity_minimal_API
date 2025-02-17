@@ -9,7 +9,7 @@ public static class YearNumbersEndpoints
     // ฟังก์ชันขยาย WebApplication เพื่อเพิ่ม API สำหรับจัดการ YearNumbers
     public static void MapYearNumbersEndpoints(this WebApplication app)
     {
-        app.MapPost("/Create_Plan_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, Dictionary<int, List<int>> yearNumbers, string userId) =>
+        app.MapPost("/Endpoints/Dictionary/Plan_DepPowerUserPermission_Dictionary/Create_Plan_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, Dictionary<int, List<int>> yearNumbers, string userId) =>
         {
             if (string.IsNullOrEmpty(userId))
                 return Results.Unauthorized();
@@ -27,9 +27,10 @@ public static class YearNumbersEndpoints
         })
         .WithName("Create_Plan_DepPowerUserPermission")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("สร้างปีงบประมาณและหน่วยงาน")
         .WithTags("Dictionary");
 
-        app.MapGet("/Read_Plan_select_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, string userId) =>
+        app.MapGet("/Endpoints/Dictionary/Plan_DepPowerUserPermission_Dictionary/Read_Plan_select_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, string userId) =>
         {
             if (string.IsNullOrEmpty(userId))
                 return Results.Unauthorized();
@@ -42,9 +43,10 @@ public static class YearNumbersEndpoints
         })
         .WithName("Read_Plan_select_DepPowerUserPermission")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ดึงข้อมูลปีงบประมาณและหน่วยงานแบบตาม ID")
         .WithTags("Dictionary");
 
-        app.MapGet("/Read_Plan_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, HttpContext httpContext) =>
+        app.MapGet("/Endpoints/Dictionary/Plan_DepPowerUserPermission_Dictionary/Read_Plan_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, HttpContext httpContext) =>
         {
             var userName = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -59,10 +61,11 @@ public static class YearNumbersEndpoints
         })
         .WithName("Read_Plan_DepPowerUserPermission")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ดึงข้อมูลปีงบประมาณและหน่วยงาน")
         .WithTags("Dictionary");
 
 
-        app.MapPut("/Update_Plan_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, Dictionary<int, List<int>> updatedYearNumbers, string userId) =>
+        app.MapPut("/Endpoints/Dictionary/Plan_DepPowerUserPermission_Dictionary/Update_Plan_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, Dictionary<int, List<int>> updatedYearNumbers, string userId) =>
         {
             if (string.IsNullOrEmpty(userId))
                 return Results.Unauthorized();
@@ -80,9 +83,10 @@ public static class YearNumbersEndpoints
         })
         .WithName("Update_Plan_DepPowerUserPermission")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("อัพเดทข้อมูลปีงบประมาณและหน่วยงาน")
         .WithTags("Dictionary");
 
-        app.MapDelete("/Delete_Plan_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, string userId) =>
+        app.MapDelete("/Endpoints/Dictionary/Plan_DepPowerUserPermission_Dictionary/Delete_Plan_DepPowerUserPermission", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, string userId) =>
         {
             if (string.IsNullOrEmpty(userId))
                 return Results.Unauthorized();
@@ -100,6 +104,7 @@ public static class YearNumbersEndpoints
         })
         .WithName("Delete_Plan_DepPowerUserPermission")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ลบข้อมูลปีงบประมาณและหน่วยงาน")
         .WithTags("Dictionary");
     }
 }

@@ -24,4 +24,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="iLinkDomain">
+      <HintPath>F:\Project_Phayao\Porject_POZ\iLinkDomain\iLinkDomain.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

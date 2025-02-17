@@ -11,7 +11,7 @@ public static class AgencyPermissionsEndpoints
     public static void MapAgencyPermissionsEndpoints(this WebApplication app)
     {
         // Endpoint สำหรับดึงข้อมูลสิทธิ์ของผู้ใช้
-        app.MapGet("/Agency_id_Showdata", [Authorize(Roles = "admin, dev")] async (string id, UserManager<IdenUser> userManager) =>
+        app.MapGet("/Endpoints/List/Agency_id/Agency_id_Showdata", [AllowAnonymous] async (string id, UserManager<IdenUser> userManager) =>
         {
             var user = await userManager.FindByIdAsync(id);
             if (user == null)
@@ -26,10 +26,11 @@ public static class AgencyPermissionsEndpoints
         })
         .WithName("agency_id_1")
         .WithGroupName("Agency_ID")
+        .WithDescription("ดึงข้อมูลIDหน่วยงานแบบตาม ID")
         .WithTags("List");
 
         // Endpoint สำหรับอัปเดตสิทธิ์ของผู้ใช้
-        app.MapPut("/Agency_id_Update", [Authorize(Roles = "admin, dev")] async (HttpContext httpContext, string type, List<int> values, UserManager<IdenUser> userManager, string userId) =>
+        app.MapPut("/Endpoints/List/Agency_id/Agency_id_Update", [Authorize(Roles = "admin, dev")] async (HttpContext httpContext, string type, List<int> values, UserManager<IdenUser> userManager, string userId) =>
         {
             if (string.IsNullOrWhiteSpace(userId))
                 return Results.Unauthorized();
@@ -67,10 +68,11 @@ public static class AgencyPermissionsEndpoints
         })
         .WithName("agency_id_2")
         .WithGroupName("Agency_ID")
+        .WithDescription("อัพเดทข้อมูลIDหน่วยงาน")
         .WithTags("List");
 
         // Endpoint สำหรับลบสิทธิ์ของผู้ใช้
-        app.MapDelete("/Agency_id_Delete_Data", [Authorize(Roles = "admin, dev")] async (string id, UserManager<IdenUser> userManager) =>
+        app.MapDelete("/Endpoints/List/Agency_id/Agency_id_Delete_Data", [Authorize(Roles = "admin, dev")] async (string id, UserManager<IdenUser> userManager) =>
         {
             var user = await userManager.FindByIdAsync(id);
             if (user == null)
@@ -86,10 +88,11 @@ public static class AgencyPermissionsEndpoints
         })
         .WithName("agency_id_3")
         .WithGroupName("Agency_ID")
+        .WithDescription("ลบข้อมูลIDหน่วยงาน")
         .WithTags("List");
 
         // Endpoint สำหรับเพิ่มสิทธิ์ของผู้ใช้
-        app.MapPost("/Agency_id_Create", [Authorize(Roles = "admin, dev")] async (HttpContext httpContext, UserManager<IdenUser> userManager, string type, List<int> values, string userId) =>
+        app.MapPost("/Endpoints/List/Agency_id/Agency_id_Create", [Authorize(Roles = "admin, dev")] async (HttpContext httpContext, UserManager<IdenUser> userManager, string type, List<int> values, string userId) =>
         {
             if (string.IsNullOrWhiteSpace(userId))
                 return Results.Unauthorized();
@@ -127,9 +130,10 @@ public static class AgencyPermissionsEndpoints
         })
         .WithName("agency_id_4")
         .WithGroupName("Agency_ID")
+        .WithDescription("สร้างข้อมูลIDหน่วยงาน")
         .WithTags("List");
 
-        app.MapGet("/Agency_id_Getdata", [Authorize(Roles = "admin, dev")] async (HttpContext httpContext, UserManager<IdenUser> userManager) =>
+        app.MapGet("/Endpoints/List/Agency_id/Agency_id_Getdata", [Authorize] async (HttpContext httpContext, UserManager<IdenUser> userManager) =>
         {
             var userName = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -149,6 +153,7 @@ public static class AgencyPermissionsEndpoints
         })
         .WithName("agency_id_5")
         .WithGroupName("Agency_ID")
+        .WithDescription("ดึงข้อมูลIDหน่วยงาน")
         .WithTags("List");
     }
 }

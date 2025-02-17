@@ -8,7 +8,7 @@ public static class FacultyAdminEndpoints
 {
     public static void MapFacultyAdminEndpoints(this WebApplication app)
     {
-        app.MapPut("Faculty_Admin_update", [Authorize(Roles = "admin, dev")] async (string id, HttpContext httpContext, UserManager<IdenUser> userManager, UpdateAccessRequest request) =>
+        app.MapPut("/Endpoints/bool/Faculty_Admin/Faculty_Admin_update", [Authorize(Roles = "admin, dev")] async (string id, HttpContext httpContext, UserManager<IdenUser> userManager, UpdateAccessRequest request) =>
         {
 
             // ตรวจสอบว่ามี id ของผู้ใช้เป้าหมายในคำขอหรือไม่
@@ -42,9 +42,10 @@ public static class FacultyAdminEndpoints
         })
         .WithName("Faculty_Admin1")
         .WithGroupName("Faculty_Admin")
+        .WithDescription("อัพเดทข้อมูลadminคณะ")
         .WithTags("bool");
 
-        app.MapGet("/Faculty_Admin_select", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, string userId) =>
+        app.MapGet("/Endpoints/bool/Faculty_Admin/Faculty_Admin_select", [Authorize(Roles = "admin, dev")] async (UserManager<IdenUser> userManager, string userId) =>
         {
             // ตรวจสอบว่า userId ที่ระบุมีในระบบหรือไม่
             var user = await userManager.FindByIdAsync(userId);
@@ -67,9 +68,10 @@ public static class FacultyAdminEndpoints
         })
         .WithName("Faculty_Admin2")
         .WithGroupName("Faculty_Admin")
+        .WithDescription("ดึงข้อมูลadminคณะแบบตาม ID")
         .WithTags("bool");
 
-        app.MapGet("/Faculty_Admin_getuser", [Authorize(Roles = "admin, dev")] (HttpContext httpContext) =>
+        app.MapGet("/Endpoints/bool/Faculty_Admin/Faculty_Admin_getuser", [Authorize(Roles = "admin, dev")] (HttpContext httpContext) =>
         {
             // ดึงค่า Claims ที่เกี่ยวข้องกับสิทธิ์
             var isFinancialDepPowerUser = httpContext.User.Claims.FirstOrDefault(c => c.Type == "IsFinancialDepPowerUser")?.Value;
@@ -96,9 +98,10 @@ public static class FacultyAdminEndpoints
         })
         .WithName("Faculty_Admin3")
         .WithGroupName("Faculty_Admin")
+        .WithDescription("ดึงข้อมูลadminคณะ")
         .WithTags("bool");
 
-        app.MapDelete("/Faculty_Admin_Clear", [Authorize(Roles = "admin, dev")] async (HttpContext httpContext, UserManager<IdenUser> userManager, string userId) =>
+        app.MapDelete("/Endpoints/bool/Faculty_Admin/Faculty_Admin_Clear", [Authorize(Roles = "admin, dev")] async (HttpContext httpContext, UserManager<IdenUser> userManager, string userId) =>
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -128,9 +131,10 @@ public static class FacultyAdminEndpoints
         })
         .WithName("Faculty_Admin4")
         .WithGroupName("Faculty_Admin")
+        .WithDescription("ลบข้อมูลadminคณะทั้งหมด")
         .WithTags("bool");
 
-        app.MapPost("/Faculty_Admin_Create", [Authorize(Roles = "admin, dev")] async (string userId, UserManager<IdenUser> userManager, UpdateAccessRequest request) =>
+        app.MapPost("/Endpoints/bool/Faculty_Admin/Faculty_Admin_Create", [Authorize(Roles = "admin, dev")] async (string userId, UserManager<IdenUser> userManager, UpdateAccessRequest request) =>
         {
             var user = await userManager.FindByIdAsync(userId); // คุณต้องสร้างฟังก์ชันนี้เพื่อดึงข้อมูล Claims
 
@@ -172,6 +176,7 @@ public static class FacultyAdminEndpoints
         })
         .WithName("Faculty_Admin5")
         .WithGroupName("Faculty_Admin")
+        .WithDescription("สร้างข้อมูลadminคณะ")
         .WithTags("bool");
     }
 }

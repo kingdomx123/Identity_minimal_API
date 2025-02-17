@@ -1,0 +1,10 @@
+﻿//record PlanCoreRequest(string Name, decimal? TotalYearlyBudget, int? FundTypeId, int? PlanCoreRequestFormId, int PlanTypeId, int? PrinciplePlanTagId, DateTime? DateStart,
+//DateTime? DateEnd, int FiscalYear, bool Active, int DepartmentId, string Code, string Detail, string Objective, string Benefit, string TargetIdListValue,
+//string OtherTarget, string TargetCountDictionaryValue, string OpFormDocNumber, string OpFormDepName, string OpFormDepTel, string OpFormDuration, string OpFormLocation,
+//string OpFormRequester, string OpFormRequesterPosition, string Output, string Outcome, string Conclusion, string OpFormInform, string PlatformEconomyEnumListValue,
+//string DepStrategy, string DepStrategyIndicator, string DepPerformanceIndicator, string FinancialPerspective, string CustomerPerspective, string InternalPerspective,
+//string LearningAndGrowthPerspective, int OpFormRequestDepartmentId, int PlanCategoryEnum, int ContinuousStatusEnum, int CreateByStaffId, decimal Weight, bool IsApproved,
+//int CodeNumber, int FundCategoryEnum, int FundSourceEnum, bool IsOpenOperate, bool IsControlByPlanCoreCode, bool IsSent, int ApprovalStepEnum, int? ReferenceOldId,
+//int? ProjectDuration, int? MonthStart, int? MonthEnd, DateTime? OpFormWriteDate, int? OpFormRequesterStaffId, decimal? FinancialPerspectiveTarget,
+//decimal? CustomerPerspectiveTarget, decimal? InternalPerspectiveTarget, decimal? LearningAndGrowthPerspectiveTarget, decimal? FinancialPerspectiveResult,
+//decimal? CustomerPerspectiveResult, decimal? InternalPerspectiveResult, decimal? LearningAndGrowthPerspectiveResult);

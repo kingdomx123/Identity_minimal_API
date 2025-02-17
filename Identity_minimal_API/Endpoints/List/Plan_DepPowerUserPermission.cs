@@ -9,7 +9,7 @@ public static class Plan_DepPowerUserPermission_Endpoints
 {
     public static void MapPlan_DepPowerUserPermission_Endpoints(this WebApplication app)
     {
-        app.MapGet("/DepPowerUserPermission_Showdata", [Authorize] async (UserManager<IdenUser> userManager, string userId) =>
+        app.MapGet("/Endpoints/List/Plan_DepPowerUserPermission/DepPowerUserPermission_Showdata", [Authorize] async (UserManager<IdenUser> userManager, string userId) =>
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -21,9 +21,10 @@ public static class Plan_DepPowerUserPermission_Endpoints
         })
         .WithName("Plan_DepPowerUserPermission1")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ดึงปีงบประมาณและหน่วยงานแบบตาม ID")
         .WithTags("List");
 
-        app.MapPost("/DepPowerUserPermission_Create", [Authorize] async (UserManager<IdenUser> userManager, string userId, List<Tuple<int, List<int>>> newList) =>
+        app.MapPost("/Endpoints/List/Plan_DepPowerUserPermission/DepPowerUserPermission_Create", [Authorize] async (UserManager<IdenUser> userManager, string userId, List<Tuple<int, List<int>>> newList) =>
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -43,9 +44,10 @@ public static class Plan_DepPowerUserPermission_Endpoints
         })
         .WithName("Plan_DepPowerUserPermission2")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("สร้างปีงบประมาณและหน่วยงาน")
         .WithTags("List");
 
-        app.MapPut("/DepPowerUserPermission_Update", [Authorize] async (UserManager<IdenUser> userManager, string userId, Tuple<int, List<int>> updateEntry) =>
+        app.MapPut("/Endpoints/List/Plan_DepPowerUserPermission/DepPowerUserPermission_Update", [Authorize] async (UserManager<IdenUser> userManager, string userId, Tuple<int, List<int>> updateEntry) =>
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -76,9 +78,10 @@ public static class Plan_DepPowerUserPermission_Endpoints
         })
         .WithName("Plan_DepPowerUserPermission3")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("อัพเดทปีงบประมาณและหน่วยงาน")
         .WithTags("List");
 
-        app.MapDelete("/DepPowerUserPermission_Delete", [Authorize] async (UserManager<IdenUser> userManager, string userId, int key) =>
+        app.MapDelete("/Endpoints/List/Plan_DepPowerUserPermission/DepPowerUserPermission_Delete", [Authorize] async (UserManager<IdenUser> userManager, string userId, int key) =>
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -98,9 +101,10 @@ public static class Plan_DepPowerUserPermission_Endpoints
         })
         .WithName("Plan_DepPowerUserPermission4")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ลบปีงบประมาณและหน่วยงาน")
         .WithTags("List");
 
-        app.MapGet("/DepPowerUserPermission_Getdata", [Authorize] async (UserManager<IdenUser> userManager, HttpContext httpContext) =>
+        app.MapGet("/Endpoints/List/Plan_DepPowerUserPermission/DepPowerUserPermission_Getdata", [Authorize] async (UserManager<IdenUser> userManager, HttpContext httpContext) =>
         {
             var userName = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -117,6 +121,7 @@ public static class Plan_DepPowerUserPermission_Endpoints
         })
         .WithName("Plan_DepPowerUserPermission5")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ดึงปีงบประมาณและหน่วยงาน")
         .WithTags("List");
     }
 }

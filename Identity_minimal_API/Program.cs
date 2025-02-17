@@ -1,6 +1,11 @@
 ﻿using Identity_jwt.Data;
 using Identity_jwt.Domain;
+using Identity_minimal_API.Endpoints.SEC.Plan;
+using iLinkDomain.DataAccess.SEC.HR;
+using iLinkDomain.Model.SEC.Plan;
+using iLinkDomain.Service.SEC.HR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -9,21 +14,31 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔗 เพิ่มการเชื่อมต่อฐานข้อมูล
-builder.Services.AddSqlServer<IdenDbcontext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+var connectionString =
+    builder.Configuration.GetConnectionString("iLinkDBConnect")
+        ?? throw new InvalidOperationException("Connection string 'iLinkDBConnect' not found.");
+
+builder.Services.AddSqlServer<IdenDbcontext>(builder.Configuration.GetConnectionString("InfolinkDbConnect"));
 builder.Services.AddIdentity<IdenUser, IdentityRole>()
               .AddEntityFrameworkStores<IdenDbcontext>()
               .AddDefaultTokenProviders();
 
-// 🔧 เพิ่มบริการ Swagger
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>
 {
-    //คำสั่งเพิ่มไปยังอีกหน้า และกำหนดหัวข้อ
-    option.SwaggerDoc("Main", new OpenApiInfo { Title = "Minimal API JWT และ Identity", Version = "Main" });
-    option.SwaggerDoc("Faculty_Admin", new OpenApiInfo { Title = "Minimal API JWT และ Identity", Version = "Faculty_Admin" });
-    option.SwaggerDoc("Plan_DepPowerUserPermission", new OpenApiInfo { Title = "Minimal API JWT และ Identity", Version = "Plan_DepPowerUserPermission" });
-    option.SwaggerDoc("Agency_ID", new OpenApiInfo { Title = "Minimal API JWT และ Identity", Version = "Agency_ID" });
+
+    option.SwaggerDoc("Main", new OpenApiInfo { Title = "หน้าหลัก", Version = "Main" });
+    option.SwaggerDoc("Faculty_Admin", new OpenApiInfo { Title = "admin คณะ", Version = "Faculty_Admin" });
+    option.SwaggerDoc("Plan_DepPowerUserPermission", new OpenApiInfo { Title = "ปีงบประมาณ ,หน่วยงาน", Version = "Plan_DepPowerUserPermission" });
+    option.SwaggerDoc("Agency_ID", new OpenApiInfo { Title = "id หน่วยงาน", Version = "Agency_ID" });
+    option.SwaggerDoc("SEC", new OpenApiInfo { Title = "SEC", Version = "SEC" });
+    option.SwaggerDoc("SEC_PlanCore", new OpenApiInfo { Title = "SEC_PlanCore", Version = "SEC_PlanCore" });
+    option.SwaggerDoc("SEC_ResponsiblePreson", new OpenApiInfo { Title = "SEC_ResponsiblePreson", Version = "SEC_ResponsiblePreson" });
+    option.SwaggerDoc("SEC_PlanActivitie", new OpenApiInfo { Title = "SEC_PlanActivitie", Version = "SEC_PlanActivitie" });
+    option.SwaggerDoc("SEC_PlanItem", new OpenApiInfo { Title = "SEC_PlanItem", Version = "SEC_PlanItem" });
+
+
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
@@ -33,23 +48,24 @@ builder.Services.AddSwaggerGen(option =>
         BearerFormat = "JWT",
         Scheme = "Bearer"
     });
+
+
     option.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-          {
-              new OpenApiSecurityScheme
-              {
-                  Reference = new OpenApiReference
-                  {
-                      Type = ReferenceType.SecurityScheme,
-                      Id = "Bearer"
-                  }
-              },
-              new string[]{}
-          }
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[]{}
+        }
     });
 });
 
-// เพิ่มบริการการกำหนดค่า JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -65,50 +81,58 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty)),
         ValidateIssuerSigningKey = true,
-        ValidateLifetime = true, // ✅ เปิดการตรวจสอบหมดอายุของ Token
-        ClockSkew = TimeSpan.Zero // ⏳ ปิดการยืดเวลาอายุของ Token (Default คือ 5 นาที)
+        ValidateLifetime = false,
+        ClockSkew = TimeSpan.Zero
     };
 });
 
-// 🛠️ เพิ่มบริการ Authorization
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// 🛠️ ตั้งค่า Swagger สำหรับโหมด Development
-if (app.Environment.IsDevelopment()) // เช็คว่าแอปกำลังรันในโหมด Development หรือไม่
+
+if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(); // เปิดใช้งาน Swagger Middleware
+    app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        // 📌 เพิ่ม API Documents หลายตัวให้สามารถเลือกดูได้ใน Swagger UI
-        options.SwaggerEndpoint("/swagger/Main/swagger.json", "Main"); // เอกสาร API สำหรับ "Main"
-        options.SwaggerEndpoint("/swagger/Faculty_Admin/swagger.json", "Faculty_Admin"); // เอกสาร API สำหรับ "Faculty_Admin"
-        options.SwaggerEndpoint("/swagger/Plan_DepPowerUserPermission/swagger.json", "Plan_DepPowerUserPermission"); // เอกสาร API สำหรับ "Plan_DepPowerUserPermission"
-        options.SwaggerEndpoint("/swagger/Agency_ID/swagger.json", "Agency_ID"); // เอกสาร API สำหรับ "Agency_ID"
 
-        // 🔒 ทำให้ Authorization (Token) คงอยู่เมื่อลองเปลี่ยนหน้า Swagger UI
+        options.SwaggerEndpoint("/swagger/Main/swagger.json", "Main");
+        options.SwaggerEndpoint("/swagger/Faculty_Admin/swagger.json", "Faculty_Admin");
+        options.SwaggerEndpoint("/swagger/Plan_DepPowerUserPermission/swagger.json", "Plan_DepPowerUserPermission");
+        options.SwaggerEndpoint("/swagger/Agency_ID/swagger.json", "Agency_ID");
+        options.SwaggerEndpoint("/swagger/SEC/swagger.json", "SEC");
+        options.SwaggerEndpoint("/swagger/SEC_PlanCore/swagger.json", "SEC_PlanCore");
+        options.SwaggerEndpoint("/swagger/SEC_ResponsiblePreson/swagger.json", "SEC_ResponsiblePreson");
+        options.SwaggerEndpoint("/swagger/SEC_PlanActivitie/swagger.json", "SEC_PlanActivitie");
+        options.SwaggerEndpoint("/swagger/SEC_PlanItem/swagger.json", "SEC_PlanItem");
+
+        // ทำให้ Authorization ไม่ออกจากระบบเองแม้จะเปลี่ยนหน้าต่างหรือยกเลิกการรันระบบ
         options.EnablePersistAuthorization();
     });
 }
 
-// 🔒 Middleware สำหรับ HTTPS
 app.UseAuthentication();
 app.UseAuthorization();
 
-// เรียกใช้ HashSet API ที่แยกออกไป
 app.MapHashSetEndpoints();
 app.MapAgency_id_HashsetEndpoints();
-// เรียกใช้ YearNumbers API
 app.MapYearNumbersEndpoints();
 app.MapFacultyAdminEndpoints();
 app.MapAgencyPermissionsEndpoints();
 app.MapPlan_DepPowerUserPermission_Endpoints();
 app.MapHomemainEndpoints(builder);
+app.MapSEC_Plan_Department_Endpoints(connectionString);
+app.MapSEC_HREndpoints(connectionString);
+app.MapSEC_PlanCores_Endpoints(connectionString);
+app.MapSEC_ResponsiblePreson_Endpoints(connectionString);
+app.MapSEC_PlanActivities_Endpoints(connectionString);
+app.MapSEC_PlanItems_Endpoints(connectionString);
 
-// 🚀 เริ่มต้นแอปพลิเคชัน
+
 app.Run();
 
 record LoginRequest(string username, string password);
 record LoginRespose(string userId, string username, string token);
-record RegisterRequest(string username, string password, string givenName, string surname, string[] roles, string fullRealName, string positionName, string hrdepartmentName, int hrdepartmentId);
+record RegisterRequest(string email, string username, string password, string givenName, string surname, string[] roles, string fullRealName, string positionName, string hrdepartmentName, int hrdepartmentId);

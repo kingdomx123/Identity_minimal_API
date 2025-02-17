@@ -7,7 +7,7 @@ public static class HashSetEndpoints
 {
     public static void MapHashSetEndpoints(this WebApplication app)
     {
-        app.MapGet("/DepPowerUserPermissionHashset_Showdata", [Authorize] async (UserManager<IdenUser> userManager, string userId) =>
+        app.MapGet("/Endpoints/Hashset/Plan_DepPowerUserPermissionHashset/DepPowerUserPermissionHashset_Showdata", [Authorize] async (UserManager<IdenUser> userManager, string userId) =>
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -19,9 +19,10 @@ public static class HashSetEndpoints
         })
         .WithName("Plan_DepPowerUserPermissionHashset1")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ดึงปีงบประมาณและหน่วยงานแบบตาม ID")
         .WithTags("Hashset");
 
-        app.MapPost("/DepPowerUserPermissionHashset_Create", [Authorize] async (UserManager<IdenUser> userManager, string userId, HashSet<Tuple<int, HashSet<int>>> newSet) =>
+        app.MapPost("/Endpoints/Hashset/Plan_DepPowerUserPermissionHashset/DepPowerUserPermissionHashset_Create", [Authorize] async (UserManager<IdenUser> userManager, string userId, HashSet<Tuple<int, HashSet<int>>> newSet) =>
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -41,9 +42,10 @@ public static class HashSetEndpoints
         })
         .WithName("Plan_DepPowerUserPermissionHashset2")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("สร้างปีงบประมาณและหน่วยงาน")
         .WithTags("Hashset");
 
-        app.MapPut("/DepPowerUserPermissionHashset_Update", [Authorize] async (UserManager<IdenUser> userManager, string userId, Tuple<int, HashSet<int>> updateEntry) =>
+        app.MapPut("/Endpoints/Hashset/Plan_DepPowerUserPermissionHashset/DepPowerUserPermissionHashset_Update", [Authorize] async (UserManager<IdenUser> userManager, string userId, Tuple<int, HashSet<int>> updateEntry) =>
         {
             // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
             var user = await userManager.FindByIdAsync(userId);
@@ -79,9 +81,10 @@ public static class HashSetEndpoints
         })
         .WithName("Plan_DepPowerUserPermissionHashset3")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("อัพเดทปีงบประมาณและหน่วยงาน")
         .WithTags("Hashset");
 
-        app.MapDelete("/DepPowerUserPermissionHashset_Delete", [Authorize] async (UserManager<IdenUser> userManager, string userId, int key) =>
+        app.MapDelete("/Endpoints/Hashset/Plan_DepPowerUserPermissionHashset/DepPowerUserPermissionHashset_Delete", [Authorize] async (UserManager<IdenUser> userManager, string userId, int key) =>
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -111,9 +114,10 @@ public static class HashSetEndpoints
         })
         .WithName("Plan_DepPowerUserPermissionHashset4")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ลบข้อมูลปีงบประมาณและหน่วยงาน")
         .WithTags("Hashset");
 
-        app.MapGet("/DepPowerUserPermissionHashset_getdata", [Authorize] async (UserManager<IdenUser> userManager, HttpContext httpContext) =>
+        app.MapGet("/Endpoints/Hashset/Plan_DepPowerUserPermissionHashset/DepPowerUserPermissionHashset_getdata", [Authorize] async (UserManager<IdenUser> userManager, HttpContext httpContext) =>
         {
             var userName = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -130,6 +134,7 @@ public static class HashSetEndpoints
         })
         .WithName("Plan_DepPowerUserPermissionHashset5")
         .WithGroupName("Plan_DepPowerUserPermission")
+        .WithDescription("ดึงข้อมูลปีงบประมาณและหน่วยงาน")
         .WithTags("Hashset");
     }
 }
