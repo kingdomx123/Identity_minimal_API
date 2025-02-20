@@ -1,4 +1,5 @@
-﻿using iLinkDomain.DataAccess.SEC.Plan;
+﻿using System.Linq;
+using iLinkDomain.DataAccess.SEC.Plan;
 using iLinkDomain.Model.SEC.Plan;
 using iLinkDomain.Service.SEC.Plan;
 using Microsoft.AspNetCore.Authorization;
@@ -73,10 +74,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var existingPlan = context.PlanCores.Find(id);
+                    var existingPlan = context.PlanCores.FirstOrDefault(c => c.Id == id);
                     if (existingPlan == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลโครงการที่ต้องการแก้ไข" });
+                        return Results.NotFound("ไม่พบข้อมูลโครงการที่ต้องการแก้ไข");
                     }
 
                     existingPlan.Name = request.Name;
@@ -132,13 +133,15 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var plancores = context.PlanCores.Find(id);
+                    PlanCoreService plancoreService = new PlanCoreService(context);
+
+                    var plancores = context.PlanCores.FirstOrDefault(c => c.Id == id);
                     if (plancores == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลโครงการที่ต้องการลบ" });
+                        return Results.NotFound("ไม่พบข้อมูลโครงการที่ต้องการลบ");
                     }
 
-                    context.PlanCores.Remove(plancores);
+                    plancoreService.Delete(plancores);
                     if (context.Entry(plancores).State == EntityState.Added)
                     {
                         context.SaveChanges();
@@ -150,29 +153,63 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             .WithTags("PlanCore")
             .WithGroupName("SEC_PlanCore");
 
-            app.MapGet("/Endpoint/SEC/Plan/PlanCore/ShowPlanCore", [AllowAnonymous] () =>
+            app.MapGet("/Endpoint/SEC/Plan/PlanCore/ShowPlanCore/{FiscalYear}/{DepartmentId}", [AllowAnonymous] (int FiscalYear, int DepartmentId) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
+                    var plancore = context.PlanCores.FirstOrDefault(c => c.FiscalYear == FiscalYear && c.DepartmentId == DepartmentId);
+                    if (plancore == null)
+                    {
+                        return Results.NotFound("ไม่พบปีงบประมาณและหน่วยงานที่ต้องการ");
+                    }
+
                     PlanCoreService plancoreService = new PlanCoreService(context);
                     var plancores = plancoreService.DbSet()
+                        .Where(c => c.FiscalYear == FiscalYear && c.DepartmentId == DepartmentId)
                         .Select(c => new
                         {
                             Id = c.Id,
                             Name = c.Name,
+                            FiscalYear = c.FiscalYear,
+                            Code = c.Code,
+                            Active = c.Active,
                             DepartmentId = c.DepartmentId,
-                            OpFormRequestDepartmentId = c.OpFormRequestDepartmentId,
                             PlanTypeId = c.PlanTypeId,
-                            DateStart = c.DateStart,
-                            DateEnd = c.DateEnd, 
+                            Detail = c.Detail,
+                            Objective = c.Objective,
+                            Benefit = c.Benefit,
+                            PlanCategoryEnum = c.PlanCategoryEnum,
                             CreateDate = c.CreateDate,
-                            TotalYearlyBudget = c.TotalYearlyBudget,
-                            FundTypeId = c.FundTypeId,
+                            CreateByStaffId = c.CreateByStaffId,
+                            IsApproved = c.IsApproved,
+                            CodeNumber = c.CodeNumber,
+                            ProjectDuration = c.ProjectDuration,
+                            MonthStart = c.MonthStart,
+                            MonthEnd = c.MonthEnd,
+                            OtherTarget = c.OtherTarget,
+                            OpFormDocNumber = c.OpFormDocNumber,
+                            OpFormDepName = c.OpFormDepName,
+                            OpFormDepTel = c.OpFormDepTel,
+                            OpFormLocation = c.OpFormLocation,
+                            OpFormRequester = c.OpFormRequester,
+                            OpFormRequesterPosition = c.OpFormRequesterPosition,
+                            OpFormWriteDate = c.OpFormWriteDate,
+                            Output = c.Output,
+                            OpFormInform = c.OpFormInform,
+                            IsControlByPlanCoreCode = c.IsControlByPlanCoreCode,
+                            IsSent = c.IsSent,
+                            DateStart = c.DateStart,
+                            DateEnd = c.DateEnd,
+                            OpFormRequesterStaffId = c.OpFormRequesterStaffId,
+                            OpFormRequestDepartmentId = c.OpFormRequestDepartmentId,
+                            DepStrategy = c.DepStrategy,
+                            DepStrategyIndicator = c.DepStrategyIndicator,
+                            DepPerformanceIndicator = c.DepPerformanceIndicator,
                         })
                         .Take(100)
-                        .ToList();  // ดึงรายการแรกสุด (Id มากที่สุด)
+                        .ToList();
 
-                    if (plancores == null)
+                    if (!plancores.Any())
                     {
                         return Results.NotFound("ไม่พบข้อมูลโครงการ");
                     }
@@ -182,6 +219,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             })
             .WithTags("PlanCore")
             .WithGroupName("SEC_PlanCore");
+
         }
     }
 

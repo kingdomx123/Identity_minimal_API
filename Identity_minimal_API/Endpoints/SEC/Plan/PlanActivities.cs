@@ -14,8 +14,8 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var Chack_PlanActivitie_PlanCoreId = context.PlanActivities.Find(PlanCoreId);
-                    if (Chack_PlanActivitie_PlanCoreId == null)
+                    var Chack_PlanCoreId = context.PlanActivities.FirstOrDefault(c => c.PlanCoreId == PlanCoreId);
+                    if (Chack_PlanCoreId == null)
                     {
                         return Results.NotFound(new { Message = "ไม่พบข้อมูลโครงการนี้" });
                     }
@@ -54,11 +54,11 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var existingPlanActivity = context.PlanActivities.Find(Id);
+                    var existingPlanActivity = context.PlanActivities.FirstOrDefault(c => c.Id == Id);
 
                     if (existingPlanActivity == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบกิจกรรมโครงการที่ต้องการอัปเดต" });
+                        return Results.NotFound("ไม่พบกิจกรรมโครงการที่ต้องการอัปเดต");
                     }
 
                     existingPlanActivity.PlanCoreId = request.PlanCoreId;
@@ -87,13 +87,15 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var PlanActivitie = context.PlanActivities.Find(id);
+                    PlanActivityService planActivityService = new PlanActivityService(context);
+
+                    var PlanActivitie = context.PlanActivities.FirstOrDefault(c => c.Id == id);
                     if (PlanActivitie == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบกิจกรรมโครงการที่ต้องการลบ" });
+                        return Results.NotFound("ไม่พบกิจกรรมโครงการที่ต้องการลบ");
                     }
 
-                    context.PlanActivities.Remove(PlanActivitie);
+                    planActivityService.Delete(PlanActivitie);
                     if (context.Entry(PlanActivitie).State == EntityState.Added)
                     {
                         context.SaveChanges();
@@ -109,10 +111,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var PlanActivitie = context.PlanActivities.Find(PlanCoreId);
+                    var PlanActivitie = context.PlanActivities.FirstOrDefault(c => c.PlanCoreId == PlanCoreId);
                     if (PlanActivitie == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลโครงการที่ต้องการ" });
+                        return Results.NotFound("ไม่พบข้อมูลโครงการที่ต้องการ");
                     }
 
                     PlanActivityService planActivityService = new PlanActivityService(context);
@@ -137,9 +139,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                         })
                         .ToList();
 
-                    if(PlanActivitie == null)
+                    if (!Planactv.Any())
                     {
-                        return Results.NotFound("ไม่พบข้อมูลกิจกรรมโครงการ");
+                        return Results.NotFound("ไม่พบข้อมูลโครงการ");
                     }
 
                     return Results.Ok(Planactv);

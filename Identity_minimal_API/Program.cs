@@ -37,6 +37,7 @@ builder.Services.AddSwaggerGen(option =>
     option.SwaggerDoc("SEC_ResponsiblePreson", new OpenApiInfo { Title = "SEC_ResponsiblePreson", Version = "SEC_ResponsiblePreson" });
     option.SwaggerDoc("SEC_PlanActivitie", new OpenApiInfo { Title = "SEC_PlanActivitie", Version = "SEC_PlanActivitie" });
     option.SwaggerDoc("SEC_PlanItem", new OpenApiInfo { Title = "SEC_PlanItem", Version = "SEC_PlanItem" });
+    option.SwaggerDoc("SEC_WorkingArea", new OpenApiInfo { Title = "SEC_WorkingArea", Version = "SEC_WorkingArea" });
 
 
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -85,8 +86,6 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 });
-
-
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -107,6 +106,7 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/SEC_ResponsiblePreson/swagger.json", "SEC_ResponsiblePreson");
         options.SwaggerEndpoint("/swagger/SEC_PlanActivitie/swagger.json", "SEC_PlanActivitie");
         options.SwaggerEndpoint("/swagger/SEC_PlanItem/swagger.json", "SEC_PlanItem");
+        options.SwaggerEndpoint("/swagger/SEC_WorkingArea/swagger.json", "SEC_WorkingArea");
 
         // ทำให้ Authorization ไม่ออกจากระบบเองแม้จะเปลี่ยนหน้าต่างหรือยกเลิกการรันระบบ
         options.EnablePersistAuthorization();
@@ -129,6 +129,7 @@ app.MapSEC_PlanCores_Endpoints(connectionString);
 app.MapSEC_ResponsiblePreson_Endpoints(connectionString);
 app.MapSEC_PlanActivities_Endpoints(connectionString);
 app.MapSEC_PlanItems_Endpoints(connectionString);
+app.MapSEC_WorkingAreasn_Endpoints(connectionString);
 
 
 app.Run();

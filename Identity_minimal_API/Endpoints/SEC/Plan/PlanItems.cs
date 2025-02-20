@@ -14,10 +14,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var check_PlanActivityId = context.PlanActivities.Find(PlanActivityId);
-                    if (check_PlanActivityId == null)
+                    var check_PlanItems = context.PlanItems.FirstOrDefault(c => c.PlanActivityId == PlanActivityId);
+                    if (check_PlanItems == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลกิจกรรมโครงการนี้" });
+                        return Results.NotFound("ไม่พบข้อมูลกิจกรรมโครงการนี้");
                     }
 
                     var newPlanItem = new PlanItem
@@ -55,11 +55,11 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var existingPlanItem = context.PlanItems.Find(Id);
+                    var existingPlanItem = context.PlanItems.FirstOrDefault(c => c.Id == Id);
 
                     if (existingPlanItem == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบรายการย่อยที่ต้องการอัปเดต" });
+                        return Results.NotFound("ไม่พบรายการย่อยที่ต้องการอัปเดต");
                     }
 
                     existingPlanItem.Name = request.Name;
@@ -92,19 +92,21 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var PlanItem = context.PlanItems.Find(id);
+                    PlanItemService PlanItemService = new PlanItemService(context);
+
+                    var PlanItem = context.PlanItems.FirstOrDefault(c => c.Id == id);
                     if (PlanItem == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบรายการย่อยที่ต้องการลบ" });
+                        return Results.NotFound("ไม่พบรายการย่อยที่ต้องการลบ");
                     }
 
-                    context.PlanItems.Remove(PlanItem);
+                    PlanItemService.Delete(PlanItem);
                     if (context.Entry(PlanItem).State == EntityState.Added)
                     {
                         context.SaveChanges();
                     }
 
-                    return Results.Ok(new { Message = "ลบรายการย่อยเสร็จสิ้น" });
+                    return Results.Ok("ลบรายการย่อยเสร็จสิ้น");
                 }
             })
             .WithTags("PlanItems")
@@ -114,10 +116,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var PlanItem = context.PlanItems.Find(PlanActivityId);
+                    var PlanItem = context.PlanItems.FirstOrDefault(c => c.PlanActivityId == PlanActivityId);
                     if (PlanItem == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลกิจกรรมโครงการที่ต้องการ" });
+                        return Results.NotFound("ไม่พบข้อมูลกิจกรรมโครงการที่ต้องการ");
                     }
 
                     PlanItemService PlanItemService = new PlanItemService(context);
@@ -141,7 +143,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                         })
                         .ToList();
 
-                    if (PlanItems == null)
+                    if (!PlanItems.Any())
                     {
                         return Results.NotFound("ไม่พบข้อมูลรายการย่อย");
                     }

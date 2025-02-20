@@ -13,10 +13,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var Chack_ResponsiblePerson_PlanCoreId = context.ResponsiblePersons.Find(PlanCoreId);
+                    var Chack_ResponsiblePerson_PlanCoreId = context.ResponsiblePersons.FirstOrDefault(c => c.PlanCoreId == PlanCoreId);
                     if (Chack_ResponsiblePerson_PlanCoreId == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลโครงการนี้" });
+                        return Results.NotFound("ไม่พบข้อมูลโครงการนี้");
                     }
 
                     var newResponsiblePreson = new ResponsiblePerson
@@ -48,10 +48,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var existingResponsiblePerson = context.ResponsiblePersons.Find(id);
+                    var existingResponsiblePerson = context.ResponsiblePersons.FirstOrDefault(c => c.Id == id);
                     if (existingResponsiblePerson == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลบุคคลากรที่ต้องการแก้ไข" });
+                        return Results.NotFound("ไม่พบข้อมูลบุคคลากรที่ต้องการแก้ไข");
                     }
 
                     existingResponsiblePerson.Name = request.Name;
@@ -80,10 +80,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var ResponsiblePreson = context.ResponsiblePersons.Find(id);
+                    var ResponsiblePreson = context.ResponsiblePersons.FirstOrDefault(c => c.Id == id); ;
                     if (ResponsiblePreson == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลบุคคลากรที่ต้องการลบ" });
+                        return Results.NotFound("ไม่พบข้อมูลบุคคลากรที่ต้องการลบ");
                     }
 
                     context.ResponsiblePersons.Remove(ResponsiblePreson);
@@ -102,10 +102,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var ResponsiblePreson = context.ResponsiblePersons.Find(PlanCoreId);
+                    var ResponsiblePreson = context.ResponsiblePersons.FirstOrDefault(c => c.PlanCoreId == PlanCoreId);
                     if (ResponsiblePreson == null)
                     {
-                        return Results.NotFound(new { Message = "ไม่พบข้อมูลโครงการที่ต้องการ" });
+                        return Results.NotFound("ไม่พบข้อมูลโครงการที่ต้องการ");
                     }
 
                     var Repersons = context.ResponsiblePersons
