@@ -72,7 +72,6 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
 
                 return Results.Ok(new { FileName = file.FileName, FilePath = $"/uploads/{file.FileName}" });
             })
-            //.DisableAntiforgery()              // ปิดการตรวจสอบ CSRF
             .RequireAuthorization()             // ต้องมี JWT เพื่อเข้าถึง
             .Accepts<IFormFile>("multipart/form-data")
             .Produces(200, typeof(object));
