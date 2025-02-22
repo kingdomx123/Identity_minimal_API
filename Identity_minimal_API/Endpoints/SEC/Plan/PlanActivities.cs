@@ -132,8 +132,6 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                             Detail = c.Detail,
                             IsFollowUp = c.IsFollowUp,
                             DepartmentId = c.DepartmentId,
-                            // แสดงข้อมูลจากอีกตาราง โดยเช็คจากไอดีที่ได้รับ
-                            //Department = c.Department, 
                             FundCategoryEnum = c.FundCategoryEnum,
                             Weight = c.Weight,
                         })

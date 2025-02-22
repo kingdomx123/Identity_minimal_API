@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using iLinkDomain.DataAccess.SEC.Plan;
 using iLinkDomain.Model.SEC.Plan;
+using iLinkDomain.Service.SEC.Plan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +43,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                 }
             })
             .WithTags("WorkingArea")
-            .WithGroupName("SEC_WorkingAreas");
+            .WithGroupName("SEC_WorkingArea");
 
 
             app.MapPut("/Endpoints/SEC/Plan/WorkingAreas/WorkingAreas_Update/{Id}", [AllowAnonymous] (int id, Working_Update request) =>
@@ -72,7 +73,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                 }
             })
             .WithTags("WorkingArea")
-            .WithGroupName("SEC_WorkingAreas");
+            .WithGroupName("SEC_WorkingArea");
 
             app.MapDelete("/Endpoints/SEC/Plan/WorkingAreas/WorkingAreas_Delete/{Id}", [AllowAnonymous] (int id) =>
             {
@@ -84,7 +85,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     {
                         return Results.NotFound("ไม่พบแผนดำเนินงานที่ต้องการ");
                     }
-
+                    PlanCoreService plancoreService = new PlanCoreService(context);
                     context.WorkingAreas.Remove(Chack_WorkingAreas);
                     if (context.Entry(Chack_WorkingAreas).State == EntityState.Added)
                     {
@@ -95,7 +96,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                 }
             })
             .WithTags("WorkingArea")
-            .WithGroupName("SEC_WorkingAreas");
+            .WithGroupName("SEC_WorkingArea");
 
             app.MapGet("/Endpoints/SEC/Plan/WorkingAreas/WorkingAreas_GetData/{PlanCoreId}", [AllowAnonymous] (int PlanCoreId) =>
             {
@@ -130,7 +131,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                 }
             })
             .WithTags("WorkingArea")
-            .WithGroupName("SEC_WorkingAreas");
+            .WithGroupName("SEC_WorkingArea");
         }
 
         record Working_Create(string Name, bool Active, int? GeographyId, int? ProvinceId, int? AmphoeId, int? TambonId);

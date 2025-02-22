@@ -98,19 +98,19 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             .WithTags("ResponsiblePreson")
             .WithGroupName("SEC_ResponsiblePreson");
 
-            app.MapGet("/Endpoint/SEC/Plan/ResponsiblePreson/ResponsiblePreson_GetData/{PlanCoreId}", [AllowAnonymous] (int PlanCoreId) =>
+            app.MapGet("/Endpoint/SEC/Plan/ResponsiblePreson/ResponsiblePreson_GetData/{PlanCoreId}", [AllowAnonymous] (int PlanCoreId, int PlanActivityId) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var ResponsiblePreson = context.ResponsiblePersons.FirstOrDefault(c => c.PlanCoreId == PlanCoreId);
+                    var ResponsiblePreson = context.ResponsiblePersons.FirstOrDefault(c => c.PlanCoreId == PlanCoreId && c.PlanActivityId == PlanActivityId);
                     if (ResponsiblePreson == null)
                     {
-                        return Results.NotFound("ไม่พบข้อมูลโครงการที่ต้องการ");
+                        return Results.NotFound("ไม่พบข้อมูลโครงการและกิจกรรมโครงการที่ต้องการ");
                     }
 
                     var Repersons = context.ResponsiblePersons
                     // เช็คว่าดึงข้อมูลจากตรงไหนบ้าง
-                        .Where(c => c.Active && c.PlanCoreId == PlanCoreId)
+                        .Where(c => c.PlanActivityId == PlanActivityId && c.PlanCoreId == PlanCoreId)
                         .Select(c => new
                         {
                             Id = c.Id,
