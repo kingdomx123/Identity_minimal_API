@@ -1,5 +1,7 @@
 ﻿using iLinkDomain.DataAccess.SEC.Plan;
 using iLinkDomain.Model.SEC.Plan;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 
 namespace Identity_minimal_API.Endpoints.SEC.Plan
@@ -8,7 +10,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
     {
         public static void MapSEC_PlanFile_Endpoints(this WebApplication app, string connectionString)
         {
-            app.MapPost("/upload", async (IFormFile file, int uploadUserId, int month) =>
+            app.MapPost("/upload", [AllowAnonymous] async (IFormFile file, int uploadUserId, int month) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -53,8 +55,27 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     return Results.Ok(new { Message = "อัปโหลดสำเร็จ", FileId = planFile });
                 }
             })
+            .RequireAuthorization()             // ต้องมี JWT เพื่อเข้าถึง
             .Accepts<IFormFile>("multipart/form-data")
             .Produces(200, typeof(object));
+
+            app.MapGet("/downloadFile/{fileName}", async (string fileName) =>
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return Results.NotFound("ไม่พบไฟล์ที่ต้องการดาวน์โหลด");
+                }
+
+                var fileStream = System.IO.File.OpenRead(filePath);
+                var contentType = GetContentType(filePath);
+
+                // ✅ เพิ่ม Content-Disposition เพื่อบังคับดาวน์โหลด
+                return Results.File(fileStream, contentType, fileName, enableRangeProcessing: true);
+            });
+
 
             app.MapPost("/uploadNotPlanFile", async (IFormFile file) =>
             {
@@ -72,10 +93,42 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
 
                 return Results.Ok(new { FileName = file.FileName, FilePath = $"/uploads/{file.FileName}" });
             })
-            .RequireAuthorization()             // ต้องมี JWT เพื่อเข้าถึง
+            .RequireAuthorization()              // เปิดใช้งาน JWT Authentication
+            .DisableAntiforgery()                // ปิด CSRF แต่ยังใช้ JWT           // ต้องมี JWT เพื่อเข้าถึง
             .Accepts<IFormFile>("multipart/form-data")
             .Produces(200, typeof(object));
 
+            //app.MapPost("/uploadNotPlanFile", [AllowAnonymous] async (IFormFile file) =>
+            //{
+            //    if (file == null || file.Length == 0)
+            //    {
+            //        return Results.BadRequest("กรุณาเลือกไฟล์");
+            //    }
+
+            //    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+            //    Directory.CreateDirectory(uploadsFolder);
+
+            //    var filePath = Path.Combine(uploadsFolder, file.FileName);
+            //    using var stream = new FileStream(filePath, FileMode.Create);
+            //    await file.CopyToAsync(stream);
+
+            //    return Results.Ok(new { FileName = file.FileName, FilePath = $"/uploads/{file.FileName}" });
+            //})
+            //.DisableAntiforgery()              // ปิดการตรวจสอบ CSRF
+            //.Accepts<IFormFile>("multipart/form-data")
+            //.Produces(200, typeof(object));
+
+
+            static string GetContentType(string path)
+            {
+                var provider = new FileExtensionContentTypeProvider();
+                if (!provider.TryGetContentType(path, out var contentType))
+                {
+                    contentType = "application/octet-stream"; // ค่า default สำหรับไฟล์ที่ไม่รู้ประเภท
+                }
+                return contentType;
+            }
         }
+
     }
 }

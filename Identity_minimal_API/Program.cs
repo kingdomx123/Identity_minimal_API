@@ -27,7 +27,7 @@ builder.Services.AddIdentity<IdenUser, IdentityRole>()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>
 {
-    option.OperationFilter<FileUploadOperationFilter>();
+
     option.SwaggerDoc("Main", new OpenApiInfo { Title = "หน้าหลัก", Version = "Main" });
     option.SwaggerDoc("Faculty_Admin", new OpenApiInfo { Title = "admin คณะ", Version = "Faculty_Admin" });
     option.SwaggerDoc("Plan_DepPowerUserPermission", new OpenApiInfo { Title = "ปีงบประมาณ ,หน่วยงาน", Version = "Plan_DepPowerUserPermission" });
