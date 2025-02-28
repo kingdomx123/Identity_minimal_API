@@ -33,10 +33,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     };
 
                     context.ResponsiblePersons.Add(newResponsiblePreson);
-                    if (context.Entry(newResponsiblePreson).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok(new { Message = "สร้างข้อมูลบุคคลากรเสร็จสิ้น", newResponsiblePreson });
                 }
@@ -64,12 +63,11 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     existingResponsiblePerson.HRDepartmentName = request.HRDepartmentName ?? "";
                     existingResponsiblePerson.PhoneNumber = request.PhoneNumber ?? "";
 
-                    if (context.Entry(existingResponsiblePerson).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
 
-                    return Results.Ok(new { Message = "อัพเดทข้อมูลบุคคลากรสำเร็จ", existingResponsiblePerson});
+                    context.SaveChanges();
+
+
+                    return Results.Ok(new { Message = "อัพเดทข้อมูลบุคคลากรสำเร็จ", existingResponsiblePerson });
                 }
             })
             .WithTags("ResponsiblePreson")
@@ -87,10 +85,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     }
 
                     context.ResponsiblePersons.Remove(ResponsiblePreson);
-                    if (context.Entry(ResponsiblePreson).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+                    context.SaveChanges();
 
                     return Results.Ok(new { Message = "ลบบุคคลากรเสร็จสิ้น" });
                 }

@@ -40,10 +40,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     };
 
                     context.PlanItems.Add(newPlanItem);
-                    if (context.Entry(newPlanItem).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok(new { Message = "สร้างข้อมูลรายการย่อยเสร็จสิ้น", newPlanItem });
                 }
@@ -77,10 +76,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     existingPlanItem.FundSourceEnum = request.FundSourceEnum;
                     existingPlanItem.AXCode = request.AXCode;
 
-                    if (context.Entry(existingPlanItem).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok(new { Message = "อัปเดตรายการย่อยเสร็จสิ้น", existingPlanItem });
                 }
@@ -101,10 +99,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     }
 
                     PlanItemService.Delete(PlanItem);
-                    if (context.Entry(PlanItem).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok("ลบรายการย่อยเสร็จสิ้น");
                 }
@@ -113,54 +110,54 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             .WithGroupName("SEC_PlanItem");
 
             app.MapGet("/Endpoint/SEC/Plan/PlanItems/PlanItems_GetData/{PlanActivityId}", [AllowAnonymous] (int PlanActivityId) =>
-            {
-                using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
-                    var PlanItem = context.PlanItems.FirstOrDefault(c => c.PlanActivityId == PlanActivityId);
-                    if (PlanItem == null)
+                    using (PlanDbContext context = new PlanDbContext(connectionString))
                     {
-                        return Results.NotFound("ไม่พบข้อมูลกิจกรรมโครงการที่ต้องการ");
-                    }
+                        var PlanItem = context.PlanItems.FirstOrDefault(c => c.PlanActivityId == PlanActivityId);
+                        if (PlanItem == null)
+                        {
+                            return Results.NotFound("ไม่พบข้อมูลกิจกรรมโครงการที่ต้องการ");
+                        }
 
-                    PlanItemService PlanItemService = new PlanItemService(context);
+                        PlanItemService PlanItemService = new PlanItemService(context);
 
-                    var PlanItems = PlanItemService.DbSet()
+                        var PlanItems = PlanItemService.DbSet()
                         .Where(c => c.PlanActivityId == PlanActivityId)
                         .Select(c => new
-                        {
-                            Id = c.Id, 
-                            Name = c.Name,
-                            Active = c.Active,
-                            FiscalYear = c.FiscalYear,
-                            PlanActivityId = c.PlanActivityId,
-                            Unit = c.Unit,
-                            BudgetTypeId = c.BudgetTypeId,
-                            Remark = c.Remark,
-                            ProtectBudget = c.ProtectBudget,
-                            FundCategoryEnum = c.FundCategoryEnum,
-                            FundSourceEnum = c.FundSourceEnum,
-                            AXCode = c.AXCode,
-                        })
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Active = c.Active,
+                    FiscalYear = c.FiscalYear,
+                    PlanActivityId = c.PlanActivityId,
+                    Unit = c.Unit,
+                    BudgetTypeId = c.BudgetTypeId,
+                    Remark = c.Remark,
+                    ProtectBudget = c.ProtectBudget,
+                    FundCategoryEnum = c.FundCategoryEnum,
+                    FundSourceEnum = c.FundSourceEnum,
+                    AXCode = c.AXCode,
+                })
                         .ToList();
 
-                    if (!PlanItems.Any())
-                    {
-                        return Results.NotFound("ไม่พบข้อมูลรายการย่อย");
+                        if (!PlanItems.Any())
+                        {
+                            return Results.NotFound("ไม่พบข้อมูลรายการย่อย");
+                        }
+
+                        return Results.Ok(PlanItems);
+
                     }
-
-                    return Results.Ok(PlanItems);
-
-                }
-            })
-            .WithTags("PlanItems")
-            .WithGroupName("SEC_PlanItem");
+                })
+                .WithTags("PlanItems")
+                .WithGroupName("SEC_PlanItem");
         }
 
-        record PlanItem_Create(string Name, bool Active, int FiscalYear, string? Unit, int? BudgetTypeId,string UndefineReserveByStaffName, 
+        record PlanItem_Create(string Name, bool Active, int FiscalYear, string? Unit, int? BudgetTypeId, string UndefineReserveByStaffName,
         string UndefineReserveRemark, string UndefineReserveForecastValue, string Remark, decimal ProtectBudget,
         int FundCategoryEnum, int FundSourceEnum, string AXCode);
 
-        record PlanItem_Update(string Name, bool Active, int FiscalYear, int PlanActivityId, string? Unit, int? BudgetTypeId, 
+        record PlanItem_Update(string Name, bool Active, int FiscalYear, int PlanActivityId, string? Unit, int? BudgetTypeId,
         string UndefineReserveByStaffName, string UndefineReserveRemark, string UndefineReserveForecastValue, string Remark, decimal ProtectBudget,
         int FundCategoryEnum, int FundSourceEnum, string AXCode);
     }

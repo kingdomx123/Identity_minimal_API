@@ -55,11 +55,13 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     return Results.Ok(new { Message = "อัปโหลดสำเร็จ", FileId = planFile });
                 }
             })
+            .WithTags("PlanFile")
+            .WithGroupName("SEC_PlanFile")
             .RequireAuthorization()             // ต้องมี JWT เพื่อเข้าถึง
             .Accepts<IFormFile>("multipart/form-data")
             .Produces(200, typeof(object));
 
-            app.MapGet("/downloadFile/{fileName}", async (string fileName) =>
+            app.MapGet("/downloadFile/{fileName}", (string fileName) =>
             {
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
                 var filePath = Path.Combine(uploadsFolder, fileName);
@@ -74,7 +76,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
 
                 // ✅ เพิ่ม Content-Disposition เพื่อบังคับดาวน์โหลด
                 return Results.File(fileStream, contentType, fileName, enableRangeProcessing: true);
-            });
+            })
+            .WithTags("PlanFile")
+            .WithGroupName("SEC_PlanFile");
 
 
             app.MapPost("/uploadNotPlanFile", async (IFormFile file) =>
@@ -93,6 +97,8 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
 
                 return Results.Ok(new { FileName = file.FileName, FilePath = $"/uploads/{file.FileName}" });
             })
+            .WithTags("PlanFile")
+            .WithGroupName("SEC_PlanFile")
             .RequireAuthorization()              // เปิดใช้งาน JWT Authentication
             .DisableAntiforgery()                // ปิด CSRF แต่ยังใช้ JWT           // ต้องมี JWT เพื่อเข้าถึง
             .Accepts<IFormFile>("multipart/form-data")
@@ -114,6 +120,8 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
 
             //    return Results.Ok(new { FileName = file.FileName, FilePath = $"/uploads/{file.FileName}" });
             //})
+            //.WithTags("PlanFile")
+            //.WithGroupName("SEC_PlanFile")
             //.DisableAntiforgery()              // ปิดการตรวจสอบ CSRF
             //.Accepts<IFormFile>("multipart/form-data")
             //.Produces(200, typeof(object));

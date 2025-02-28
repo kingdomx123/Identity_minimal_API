@@ -38,10 +38,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     };
 
                     context.PlanActivities.Add(newPlanActivities);
-                    if (context.Entry(newPlanActivities).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok(new { Message = "สร้างข้อมูลกิจกรรมโครงการเสร็จสิ้น", newPlanActivities });
                 }
@@ -62,20 +61,17 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     }
 
                     existingPlanActivity.PlanCoreId = request.PlanCoreId;
-                    existingPlanActivity.Name = request.Name;
-                    existingPlanActivity.Active = request.Active;
-                    existingPlanActivity.FiscalYear = request.FiscalYear;
-                    existingPlanActivity.Code = request.Code ?? "";
-                    existingPlanActivity.Detail = request.Detail ?? "";
-                    existingPlanActivity.IsFollowUp = request.IsFollowUp;
-                    existingPlanActivity.DepartmentId = request.DepartmentId;
-                    existingPlanActivity.FundCategoryEnum = request.FundCategoryEnum;
-                    existingPlanActivity.Weight = request.Weight;
+                    existingPlanActivity.Name = request.planActivities_Create.Name;
+                    existingPlanActivity.Active = request.planActivities_Create.Active;
+                    existingPlanActivity.FiscalYear = request.planActivities_Create.FiscalYear;
+                    existingPlanActivity.Code = request.planActivities_Create.Code ?? "";
+                    existingPlanActivity.Detail = request.planActivities_Create.Detail ?? "";
+                    existingPlanActivity.IsFollowUp = request.planActivities_Create.IsFollowUp;
+                    existingPlanActivity.DepartmentId = request.planActivities_Create.DepartmentId;
+                    existingPlanActivity.FundCategoryEnum = request.planActivities_Create.FundCategoryEnum;
+                    existingPlanActivity.Weight = request.planActivities_Create.Weight;
 
-                    if (context.Entry(existingPlanActivity).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+                    context.SaveChanges();
 
                     return Results.Ok(new { Message = "อัปเดตกิจกรรมโครงการเสร็จสิ้น", existingPlanActivity });
                 }
@@ -96,12 +92,10 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     }
 
                     planActivityService.Delete(PlanActivitie);
-                    if (context.Entry(PlanActivitie).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
 
-                    return Results.Ok(new { Message = "ลบกิจกรรมโครงการเสร็จสิ้น" });
+                    context.SaveChanges();
+
+                    return Results.Ok("ลบกิจกรรมโครงการเสร็จสิ้น");
                 }
             })
             .WithTags("PlanActivities")
@@ -128,7 +122,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                             Name = c.Name,
                             Active = c.Active,
                             FiscalYear = c.FiscalYear,
-                            Code = c.Code, 
+                            Code = c.Code,
                             Detail = c.Detail,
                             IsFollowUp = c.IsFollowUp,
                             DepartmentId = c.DepartmentId,
@@ -153,7 +147,6 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
         record PlanActivities_Create(string Name, bool Active, int FiscalYear, string Code, string Detail, bool IsFollowUp,
         int DepartmentId, int FundCategoryEnum, decimal Weight, string OtherFundSourceName, string OperationPeriod);
 
-        record PlanActivities_update(int PlanCoreId, string Name, bool Active, int FiscalYear, string Code, string Detail, bool IsFollowUp,
-        int DepartmentId, int FundCategoryEnum, decimal Weight, string OtherFundSourceName, string OperationPeriod);
+        record PlanActivities_update(int PlanCoreId, PlanActivities_Create planActivities_Create);
     }
 }

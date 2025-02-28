@@ -1,16 +1,14 @@
 ﻿using Identity_jwt.Data;
 using Identity_jwt.Domain;
 using Identity_minimal_API.Endpoints.SEC.Plan;
-using iLinkDomain.DataAccess.SEC.HR;
-using iLinkDomain.Model.SEC.Plan;
-using iLinkDomain.Service.SEC.HR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +36,8 @@ builder.Services.AddSwaggerGen(option =>
     option.SwaggerDoc("SEC_PlanActivitie", new OpenApiInfo { Title = "SEC_PlanActivitie", Version = "SEC_PlanActivitie" });
     option.SwaggerDoc("SEC_PlanItem", new OpenApiInfo { Title = "SEC_PlanItem", Version = "SEC_PlanItem" });
     option.SwaggerDoc("SEC_WorkingArea", new OpenApiInfo { Title = "SEC_WorkingArea", Version = "SEC_WorkingArea" });
+    option.SwaggerDoc("SEC_PlanFile", new OpenApiInfo { Title = "SEC_PlanFile", Version = "SEC_PlanFile" }); 
+    option.SwaggerDoc("SEC_StrategicIndicator", new OpenApiInfo { Title = "SEC_StrategicIndicator", Version = "SEC_StrategicIndicator" });
 
 
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -88,6 +88,11 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAuthorization();
 
+builder.Services.Configure<JsonOptions>(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
+
 var app = builder.Build();
 
 
@@ -99,14 +104,16 @@ if (app.Environment.IsDevelopment())
 
         options.SwaggerEndpoint("/swagger/Main/swagger.json", "Main");
         options.SwaggerEndpoint("/swagger/Faculty_Admin/swagger.json", "Faculty_Admin");
-        options.SwaggerEndpoint("/swagger/Plan_DepPowerUserPermission/swagger.json", "Plan_DepPowerUserPermission");
         options.SwaggerEndpoint("/swagger/Agency_ID/swagger.json", "Agency_ID");
         options.SwaggerEndpoint("/swagger/SEC/swagger.json", "SEC");
         options.SwaggerEndpoint("/swagger/SEC_PlanCore/swagger.json", "SEC_PlanCore");
-        options.SwaggerEndpoint("/swagger/SEC_ResponsiblePreson/swagger.json", "SEC_ResponsiblePreson");
         options.SwaggerEndpoint("/swagger/SEC_PlanActivitie/swagger.json", "SEC_PlanActivitie");
         options.SwaggerEndpoint("/swagger/SEC_PlanItem/swagger.json", "SEC_PlanItem");
+        options.SwaggerEndpoint("/swagger/SEC_ResponsiblePreson/swagger.json", "SEC_ResponsiblePreson");
+        options.SwaggerEndpoint("/swagger/Plan_DepPowerUserPermission/swagger.json", "Plan_DepPowerUserPermission");
         options.SwaggerEndpoint("/swagger/SEC_WorkingArea/swagger.json", "SEC_WorkingArea");
+        options.SwaggerEndpoint("/swagger/SEC_WorkingArea/swagger.json", "SEC_PlanFile");
+        options.SwaggerEndpoint("/swagger/SEC_StrategicIndicator/swagger.json", "SEC_StrategicIndicator");
 
         // ทำให้ Authorization ไม่ออกจากระบบเองแม้จะเปลี่ยนหน้าต่างหรือยกเลิกการรันระบบ
         options.EnablePersistAuthorization();
@@ -131,6 +138,8 @@ app.MapSEC_PlanActivities_Endpoints(connectionString);
 app.MapSEC_PlanItems_Endpoints(connectionString);
 app.MapSEC_WorkingAreasn_Endpoints(connectionString);
 app.MapSEC_PlanFile_Endpoints(connectionString);
+app.MapSEC_PlanCore_Activities_Items_Endpoints(connectionString);
+app.MapSEC_StrategicIndicator_Endpoints(connectionString);
 
 
 app.Run();

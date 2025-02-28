@@ -11,7 +11,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
     {
         public static void MapSEC_PlanCores_Endpoints(this WebApplication app, string connectionString)
         {
-            app.MapPost("/Endpoint/SEC/Plan/PlanCore/CreatePlanCore", [AllowAnonymous] (PlanCoreRequest request) =>
+            app.MapPost("/Endpoint/SEC/Plan/PlanCore/CreatePlanCore", [AllowAnonymous] (PlanCoreRequestMain request) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -59,10 +59,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     };
 
                     context.PlanCores.Add(newPlancore);
-                    if (context.Entry(newPlancore).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok(new { Message = "สร้างข้อมูลโครงสร้างเสร็จสิ้น", newPlancore });
                 }
@@ -70,7 +69,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             .WithTags("PlanCore")
             .WithGroupName("SEC_PlanCore");
 
-            app.MapPut("/Endpoint/SEC/Plan/PlanCore/UpdatePlanCore/{id}", [AllowAnonymous] (int id, PlanCoreRequest request) =>
+            app.MapPut("/Endpoint/SEC/Plan/PlanCore/UpdatePlanCore/{id}", [AllowAnonymous] (int id, PlanCoreRequestMain request) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -118,12 +117,11 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     existingPlan.TotalYearlyBudget = request.TotalYearlyBudget;
                     existingPlan.FundTypeId = request.FundTypeId;
 
-                    if (context.Entry(existingPlan).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
 
-                    return Results.Ok(new { Message = "อัปเดตข้อมูลโครงการสำเร็จ", existingPlan});
+                    context.SaveChanges();
+
+
+                    return Results.Ok(new { Message = "อัปเดตข้อมูลโครงการสำเร็จ", existingPlan });
                 }
             })
             .WithTags("PlanCore")
@@ -142,12 +140,11 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     }
 
                     plancoreService.Delete(plancores);
-                    if (context.Entry(plancores).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
 
-                    return Results.Ok(new { Message = "ลบข้อมูลโครงการเสร็จสิ้น"});
+                    context.SaveChanges();
+
+
+                    return Results.Ok(new { Message = "ลบข้อมูลโครงการเสร็จสิ้น" });
                 }
             })
             .WithTags("PlanCore")
@@ -223,7 +220,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
         }
     }
 
-    record PlanCoreRequest(string Name, int FiscalYear, string Code, bool Active, int DepartmentId, int PlanTypeId, string Detail, string Objective, string Benefit,
+    record PlanCoreRequestMain(string Name, int FiscalYear, string Code, bool Active, int DepartmentId, int PlanTypeId, string Detail, string Objective, string Benefit,
     int PlanCategoryEnum, int CreateByStaffId, bool IsApproved, int CodeNumber, int? ProjectDuration, int? MonthStart, int? MonthEnd, string OtherTarget,
     string OpFormDocNumber, string OpFormDepName, string OpFormDepTel, string OpFormLocation, string OpFormRequester, string OpFormRequesterPosition, DateTime? OpFormWriteDate,
     string Output, string OpFormInform, bool IsControlByPlanCoreCode, bool IsSent, DateTime? DateStart, DateTime? DateEnd, int? OpFormRequesterStaffId, int? OpFormRequestDepartmentId,

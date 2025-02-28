@@ -34,10 +34,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     };
 
                     context.WorkingAreas.Add(newWorkingArea);
-                    if (context.Entry(newWorkingArea).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok(new { Message = "สร้างแผนดำเนินงานเสร็จสิ้น", newWorkingArea });
                 }
@@ -49,7 +48,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             app.MapPut("/Endpoints/SEC/Plan/WorkingAreas/WorkingAreas_Update/{Id}", [AllowAnonymous] (int id, Working_Update request) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
-                { 
+                {
                     var existingworkingAreas = context.WorkingAreas.FirstOrDefault(c => c.Id == id);
                     if (existingworkingAreas == null)
                     {
@@ -64,10 +63,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     existingworkingAreas.TambonId = request.TambonId;
                     existingworkingAreas.PlanCoreId = request.PlanCoreId;
 
-                    if (context.Entry(existingworkingAreas).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok(new { Message = "อัพเดทแผนดำเนินงานเสร็จสิ้น", existingworkingAreas });
                 }
@@ -87,10 +85,9 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     }
                     PlanCoreService plancoreService = new PlanCoreService(context);
                     context.WorkingAreas.Remove(Chack_WorkingAreas);
-                    if (context.Entry(Chack_WorkingAreas).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+
+                    context.SaveChanges();
+
 
                     return Results.Ok("ลบแผนดำเนินงานเสร็จสิ้น");
                 }
