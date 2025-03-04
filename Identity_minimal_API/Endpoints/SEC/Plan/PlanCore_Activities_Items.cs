@@ -50,7 +50,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             //.WithTags("SEC")
             //.WithGroupName("SEC");
 
-            app.MapPost("/Unified/Plan/Create", [AllowAnonymous] (UnifiedRequest request) =>
+            app.MapPost("/Endpoint/SEC/Unified/Plan/Create", [AllowAnonymous] (UnifiedRequest request) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -150,7 +150,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
 
                     }
 
-                    context.SaveChanges();  // Save all activities at once
+                    context.SaveChanges();
 
                     // ดึงข้อมูลที่เพิ่งสร้างขึ้นมา
                     var planCore = context.PlanCores
@@ -181,7 +181,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             .WithTags("SEC")
             .WithGroupName("SEC");
 
-            app.MapPut("/Unified/Plan/Update/{id}", [AllowAnonymous] (int id, UnifiedRequest request) =>
+            app.MapPut("/Endpoint/SEC/Unified/Plan/Update/{id}", [AllowAnonymous] (int id, UnifiedRequest request) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -236,7 +236,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     existingPlanCore.TargetIdListValue = request.PlanCore.TargetIdListValue ?? "";
 
                     // ลบกิจกรรมเดิมและเพิ่มใหม่
-                    context.PlanActivities.RemoveRange(existingPlanCore.PlanActivities);
+                    //context.PlanActivities.RemoveRange(existingPlanCore.PlanActivities);
 
                     foreach (var activity in request.PlanActivitiesRe)
                     {
@@ -258,6 +258,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                         };
 
                         context.PlanActivities.Add(newPlanActivity);
+                        context.SaveChanges();
 
                         foreach (var item in activity.PlanItems)
                         {
@@ -280,6 +281,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                                 CreateDate = DateTime.UtcNow
                             };
                             context.PlanItems.Add(newPlanItem);
+                            context.SaveChanges();
                         }
                     }
 
@@ -309,22 +311,158 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             .WithTags("SEC")
             .WithGroupName("SEC");
 
-            app.MapGet("/Unified/Plan/Get", [AllowAnonymous] (int fiscalYear, int departmentId) =>
+            app.MapGet("/Endpoint/SEC/Unified/Plan/Get_DTO/{fiscalYear}/{departmentId}", [AllowAnonymous] async (int fiscalYear, int departmentId) =>
+            {
+                try
+                {
+                    using (PlanDbContext context = new PlanDbContext(connectionString))
+                    {
+                        if (context.PlanCores == null)
+                        {
+                            return Results.Problem("ไม่สามารถเข้าถึงตารางฐานข้อมูลโครงการได้");
+                        }
+
+                        var plancores = await context.PlanCores
+                            .AsNoTracking()
+                            .Where(c => c.FiscalYear == fiscalYear && c.DepartmentId == departmentId)
+                            .Include(p => p.PlanActivities)
+                                .ThenInclude(a => a.PlanItems)
+                                .ThenInclude(i => i.SummaryStatementCaches)
+                            .ToListAsync();
+
+                        if (!plancores.Any())
+                        {
+                            return Results.NotFound(new { Message = "ไม่พบปีงบประมาณและหน่วยงานที่ต้องการ" });
+                        }
+
+                        var result = plancores.Select(p => new
+                        {
+                            p.IsDeletable,
+                            p.TotalBudgetCache,
+                            p.NetBudgetCache,
+                            p.UsedBudgetCache,
+                            p.RemainBudgetCache,
+                            p.Id,
+                            p.FiscalYear,
+                            p.DepartmentId,
+                            p.Name,
+                            p.Code,
+                            p.Detail,
+                            p.Objective,
+                            p.Benefit,
+                            p.PlanTypeId,
+                            p.PlanCategoryEnum,
+                            p.IsApproved,
+                            p.ProjectDuration,
+                            p.MonthStart,
+                            p.MonthEnd,
+                            p.OtherTarget,
+                            p.OpFormDocNumber,
+                            p.OpFormDepName,
+                            p.OpFormDepTel,
+                            p.OpFormLocation,
+                            p.OpFormRequester,
+                            p.OpFormRequesterPosition,
+                            p.OpFormWriteDate,
+                            p.Output,
+                            p.OpFormInform,
+                            p.IsControlByPlanCoreCode,
+                            p.IsSent,
+                            p.DateStart,
+                            p.DateEnd,
+                            p.OpFormRequesterStaffId,
+                            p.OpFormRequestDepartmentId,
+                            p.DepStrategy,
+                            p.DepStrategyIndicator,
+                            p.DepPerformanceIndicator,
+                            p.TotalYearlyBudget,
+                            p.FundTypeId,
+                            p.TargetIdListValue,
+
+                            PlanActivities = p.PlanActivities.Select(a => new
+                            {
+                                a.Id,
+                                a.Name,
+                                a.Code,
+                                a.Active,
+                                a.Detail,
+                                a.IsFollowUp,
+                                a.DepartmentId,
+                                a.FundCategoryEnum,
+                                a.Weight,
+                                a.OtherFundSourceName,
+                                a.OperationPeriod,
+
+                                PlanItems = a.PlanItems.Select(i => new
+                                {
+                                    i.Id,
+                                    i.Name,
+                                    i.Active,
+                                    i.FiscalYear,
+                                    i.Unit,
+                                    i.BudgetTypeId,
+                                    i.UndefineReserveByStaffName,
+                                    i.UndefineReserveRemark,
+                                    i.UndefineReserveForecastValue,
+                                    i.Remark,
+                                    i.ProtectBudget,
+                                    i.FundCategoryEnum,
+                                    i.FundSourceEnum,
+                                    i.AXCode
+                                }).ToList()
+                            }).ToList()
+                        }).ToList();
+
+                        return Results.Json(new
+                        {
+                            Message = "ดึงข้อมูลโครงการสำเร็จ",
+                            Plans = result
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(
+                        title: "เกิดข้อผิดพลาดในการดึงข้อมูลโครงการ",
+                        detail: ex.Message,
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
+                }
+            })
+            .WithTags("SEC")
+            .WithGroupName("SEC");
+
+            app.MapGet("/Endpoint/SEC/Unified/Plan/Get/{fiscalYear}/{departmentId}", [AllowAnonymous] (int fiscalYear, int departmentId) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
                     if (context.PlanCores == null)
                     {
-                        return Results.Problem("Database table 'PlanCores' is not accessible.");
+                        return Results.Problem("ไม่สามารถเข้าถึงตารางฐานข้อมูลโครงการได้");
                     }
 
                     PlanCoreService plancoreService = new PlanCoreService(context);
                     var plancores = plancoreService.DbSet()
-                        .AsNoTracking()
-                        .Include(p => p.PlanActivities)
-                            .ThenInclude(a => a.PlanItems)
-                        .Where(c => c.FiscalYear == fiscalYear && c.DepartmentId == departmentId)
-                        .ToList();
+                    .AsNoTracking()
+                    .Include(p => p.PlanActivities)
+                        .ThenInclude(a => a.PlanItems)
+                    //.ThenInclude(i => i.SummaryStatementCaches)
+                    .Where(c => c.FiscalYear == fiscalYear && c.DepartmentId == departmentId)
+                    .ToList();
+
+                    //var plancores = context.PlanCores
+                    //.AsNoTracking()
+                    //.Where(c => c.FiscalYear == fiscalYear && c.DepartmentId == departmentId)
+                    //.Include(p => p.PlanActivities)
+                    //    .ThenInclude(a => a.PlanItems) // ดึง PlanItems
+                    //    .ThenInclude(i => i.BudgetType) // ดึง BudgetType ใน PlanItems
+                    //.Include(p => p.PlanActivities)
+                    //    .ThenInclude(a => a.PlanItems) // ดึง PlanItems
+                    //    .ThenInclude(i => i.BudgetType) // ดึง BudgetType ใน PlanItems
+                    //.ThenInclude(i => i.SummaryStatementCaches)
+                    //.ToList();  // โหลดข้อมูลทั้งหมด
+
+
 
                     if (!plancores.Any())
                     {
@@ -355,34 +493,41 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     var PlanActivityService = new PlanActivityService(context);
                     var PlanCoreService = new PlanCoreService(context);
 
-                    var PlanItem = context.PlanItems.FirstOrDefault(c => c.Id == id);
-                    if (PlanItem != null)
-                    {
-                        PlanItemService.Delete(PlanItem);
-                    }
-
-                    var PlanActivity = context.PlanActivities.FirstOrDefault(a => a.Id == id);
-                    if (PlanActivity != null)
-                    {
-                        PlanActivityService.Delete(PlanActivity);
-                    }
-
                     var PlanCore = context.PlanCores.FirstOrDefault(p => p.Id == id);
-                    if (PlanCore != null)
+                    if (PlanCore == null)
                     {
-                        PlanCoreService.Delete(PlanCore);
+                        return Results.NotFound("ไม่พบข้อมูลโครงการที่ต้องการลบ");
                     }
-                    else
+
+                    // ดึงรายการ PlanActivity ที่เกี่ยวข้องกับ PlanCore
+                    var PlanActivities = context.PlanActivities.Where(a => a.PlanCoreId == id).ToList();
+
+                    foreach (var activity in PlanActivities)
                     {
-                        return Results.NotFound("ไม่พบโครงการที่ต้องการลบ");
+                        // ดึงรายการ PlanItem ที่เกี่ยวข้องกับ PlanActivity
+                        var PlanItems = context.PlanItems.Where(i => i.PlanActivityId == activity.Id).ToList();
+
+                        // ลบ PlanItem ทั้งหมดที่เกี่ยวข้องโดยใช้ Service
+                        foreach (var item in PlanItems)
+                        {
+                            PlanItemService.Delete(item);
+                        }
+
+                        // ลบ PlanActivity โดยใช้ Service
+                        PlanActivityService.Delete(activity);
                     }
+
+                    // ลบ PlanCore โดยใช้ Service
+                    PlanCoreService.Delete(PlanCore);
+
+                    // บันทึกการเปลี่ยนแปลง
+                    context.SaveChanges();
 
                     return Results.Ok("ลบข้อมูลสำเร็จ");
                 }
             })
             .WithTags("SEC")
             .WithGroupName("SEC");
-
 
         }
 
