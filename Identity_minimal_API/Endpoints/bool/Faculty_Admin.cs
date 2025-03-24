@@ -82,11 +82,11 @@ public static class FacultyAdminEndpoints
 
             // รวบรวมสิทธิ์ที่มี
             var permissions = new List<string>();
-            if (isFinancialDepPowerUser == "True") permissions.Add("Admin การเงิน");
-            if (isFinDepUser == "True") permissions.Add("Admin กองคลัง");
-            if (isPlanDepPowerUser == "True") permissions.Add("Admin งานแผน");
-            if (isProcureDepPowerUser == "True") permissions.Add("Admin งานพัสดุ");
-            if (isHRDepPowerUser == "True") permissions.Add("Admin งานบุคคล");
+            if (isFinancialDepPowerUser == "true") permissions.Add("Admin การเงิน");
+            if (isFinDepUser == "true") permissions.Add("Admin กองคลัง");
+            if (isPlanDepPowerUser == "true") permissions.Add("Admin งานแผน");
+            if (isProcureDepPowerUser == "true") permissions.Add("Admin งานพัสดุ");
+            if (isHRDepPowerUser == "true") permissions.Add("Admin งานบุคคล");
 
             // หากไม่มีสิทธิ์เข้าถึง
             if (!permissions.Any())

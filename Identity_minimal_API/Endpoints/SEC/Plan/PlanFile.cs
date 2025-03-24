@@ -2,7 +2,6 @@
 using iLinkDomain.Model.SEC.Plan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.EntityFrameworkCore;
 
 namespace Identity_minimal_API.Endpoints.SEC.Plan
 {
@@ -19,21 +18,15 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                         return Results.BadRequest("กรุณาเลือกไฟล์");
                     }
 
-                    var uploadsFolder = @"F:\Project_Phayao\PlanFile";
+                    var uploadsFolder = @"C:\PlanFile";
+                    Directory.CreateDirectory(uploadsFolder); // สร้างโฟลเดอร์ถ้ายังไม่มี
 
-                    if (!Directory.Exists(uploadsFolder))
-                    {
-                        Directory.CreateDirectory(uploadsFolder);
-                    }
-
+                    // ป้องกันการชนกันของชื่อไฟล์
+                    var fileName = $"{Guid.NewGuid()}_{file.FileName}";
                     var filePath = Path.Combine(uploadsFolder, file.FileName);
+                    using var stream = new FileStream(filePath, FileMode.Create);
+                    await file.CopyToAsync(stream);
 
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await file.CopyToAsync(stream);
-                    }
-
-                    // ✅ สร้างข้อมูล `PlanFile` และบันทึกลงฐานข้อมูล
                     var planFile = new PlanFile
                     {
                         Name = file.FileName,
@@ -43,21 +36,35 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                         UploadUserId = uploadUserId,
                         Type = file.ContentType,
                         Active = true,
-                        Month = month
+                        Month = month,
+                        GeneralExpenseMemoFormId = null,
+                        PlanMonthlyOperationId = null,
+                        GeFormActionLogId = null,
+                        GeneralExpenseRequestFormId = null,
+                        ProcurementForecastFormId = null,
+                        PlanCoreId = null,
+                        GeneralExpensePersonalBorrowFormId = null,
+                        FinancialReimbursementFormId = null,
+                        SettleReceiptFormId = null,
+                        GeneralExpenseSettleFormId = null,
+                        OutsideDutyReportFormId = null,
+                        GeOutsideDutyRequestFormId = null,
+                        DirectExpenseMemoFormId = null,
+                        BudgetTransferFormId = null,
+                        YearEndReserveFormId = null,
+                        ExtendReserveFormId = null
                     };
 
                     context.PlanFiles.Add(planFile);
-                    if (context.Entry(planFile).State == EntityState.Added)
-                    {
-                        context.SaveChanges();
-                    }
+                    context.SaveChanges();
 
                     return Results.Ok(new { Message = "อัปโหลดสำเร็จ", FileId = planFile });
                 }
             })
             .WithTags("PlanFile")
             .WithGroupName("SEC_PlanFile")
-            .RequireAuthorization()             // ต้องมี JWT เพื่อเข้าถึง
+            .RequireAuthorization() // ต้องมี JWT เพื่อเข้าถึง
+            .DisableAntiforgery()
             .Accepts<IFormFile>("multipart/form-data")
             .Produces(200, typeof(object));
 

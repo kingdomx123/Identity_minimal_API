@@ -86,7 +86,18 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 });
-builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PlanCoreAccess", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim(c =>
+                (c.Type == "IsFinancialDepPowerUser" && c.Value == "true") ||
+                (c.Type == "IsFinDepUser" && c.Value == "true")
+            )
+        )
+    );
+});
 
 builder.Services.Configure<JsonOptions>(options =>
 {
@@ -112,7 +123,7 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/SEC_ResponsiblePreson/swagger.json", "SEC_ResponsiblePreson");
         options.SwaggerEndpoint("/swagger/Plan_DepPowerUserPermission/swagger.json", "Plan_DepPowerUserPermission");
         options.SwaggerEndpoint("/swagger/SEC_WorkingArea/swagger.json", "SEC_WorkingArea");
-        options.SwaggerEndpoint("/swagger/SEC_WorkingArea/swagger.json", "SEC_PlanFile");
+        options.SwaggerEndpoint("/swagger/SEC_PlanFile/swagger.json", "SEC_PlanFile");
         options.SwaggerEndpoint("/swagger/SEC_StrategicIndicator/swagger.json", "SEC_StrategicIndicator");
 
         // ทำให้ Authorization ไม่ออกจากระบบเองแม้จะเปลี่ยนหน้าต่างหรือยกเลิกการรันระบบ
@@ -143,7 +154,3 @@ app.MapSEC_StrategicIndicator_Endpoints(connectionString);
 
 
 app.Run();
-
-record LoginRequest(string username, string password);
-record LoginRespose(string userId, string username, string token);
-record RegisterRequest(string email, string username, string password, string givenName, string surname, string[] roles, string fullRealName, string positionName, string hrdepartmentName, int hrdepartmentId);

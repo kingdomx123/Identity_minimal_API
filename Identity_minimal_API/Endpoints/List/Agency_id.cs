@@ -1,9 +1,6 @@
 ﻿using Identity_jwt.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
 using System.Security.Claims;
 
 public static class AgencyPermissionsEndpoints

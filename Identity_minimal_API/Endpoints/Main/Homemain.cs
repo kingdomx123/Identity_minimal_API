@@ -7,6 +7,7 @@ using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.RegularExpressions;
+using iLinkDomain.DataAccess.SEC.Plan;
 
 public static class HomeMainEndpoints
 {
@@ -112,7 +113,7 @@ public static class HomeMainEndpoints
             var newUser = new IdenUser
             {
                 Email = user.email,
-                NormalizedEmail = user.email.ToUpper(), // กำหนดค่าอัตโนมัติ
+                NormalizedEmail = user.email.ToUpper(),
                 FullRealName = user.fullRealName,
                 UserName = user.username,
                 GivenName = user.givenName,
@@ -160,14 +161,15 @@ public static class HomeMainEndpoints
             var claims = new List<Claim>();
             claims.Add(new Claim(JwtRegisteredClaimNames.Sub, user.username)); // ชื่อผู้ใช้
             claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())); // Unique Token ID
+            claims.Add(new Claim("id", u.Id));
             claims.Add(new Claim(ClaimTypes.Name, u.FullRealName));
             claims.Add(new Claim(ClaimTypes.GivenName, u.GivenName)); // ชื่อจริง
             claims.Add(new Claim(ClaimTypes.Surname, u.Surname)); // นามสกุล
-            claims.Add(new Claim("IsFinancialDepPowerUser", u.IsFinancialDepPowerUser?.ToString() ?? "false"));
-            claims.Add(new Claim("IsFinDepUser", u.IsFinDepUser?.ToString() ?? "false"));
-            claims.Add(new Claim("IsPlanDepPowerUser", u.IsPlanDepPowerUser?.ToString() ?? "false"));
-            claims.Add(new Claim("IsProcureDepPowerUser", u.IsProcureDepPowerUser?.ToString() ?? "false"));
-            claims.Add(new Claim("IsHRDepPowerUser", u.IsHRDepPowerUser?.ToString() ?? "false"));
+            claims.Add(new Claim("IsFinancialDepPowerUser", u.IsFinancialDepPowerUser?.ToString().ToLower() ?? "false"));
+            claims.Add(new Claim("IsFinDepUser", u.IsFinDepUser?.ToString().ToLower() ?? "false"));
+            claims.Add(new Claim("IsPlanDepPowerUser", u.IsPlanDepPowerUser?.ToString().ToLower() ?? "false"));
+            claims.Add(new Claim("IsProcureDepPowerUser", u.IsProcureDepPowerUser?.ToString().ToLower() ?? "false"));
+            claims.Add(new Claim("IsHRDepPowerUser", u.IsHRDepPowerUser?.ToString().ToLower() ?? "false"));
             claims.Add(new Claim("HR_HRDepartmentPermission", JsonSerializer.Serialize(u.HR_HRDepartmentPermission)));
             claims.Add(new Claim("Plan_DepartmentPermission", JsonSerializer.Serialize(u.Plan_DepartmentPermission)));
             claims.Add(new Claim("Plan_DepPowerByPlanPermission", JsonSerializer.Serialize(u.Plan_DepPowerByPlanPermission)));
@@ -230,17 +232,17 @@ public static class HomeMainEndpoints
 
             // สร้าง Claims ใหม่ (ใช้ข้อมูลจากฐานข้อมูลของผู้ใช้)
             var claims = new List<Claim>
-    {
-        new Claim(JwtRegisteredClaimNames.Sub, user.UserName!), // ใส่ Username ของผู้ใช้
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // สร้าง Unique Token ID
-        new Claim(ClaimTypes.Name, user.FullRealName ?? string.Empty), // ใส่ชื่อจริงของผู้ใช้
-        // new Claim("id", user.Id), // ID ของผู้ใช้ (ถูกคอมเมนต์ออก)
-        new Claim("IsFinancialDepPowerUser", user.IsFinancialDepPowerUser?.ToString() ?? "false"), // ตรวจสอบสิทธิ์ของผู้ใช้
-        new Claim("IsFinDepUser", user.IsFinDepUser?.ToString() ?? "false"),
-        new Claim("IsPlanDepPowerUser", user.IsPlanDepPowerUser?.ToString() ?? "false"),
-        new Claim("IsProcureDepPowerUser", user.IsProcureDepPowerUser?.ToString() ?? "false"),
-        new Claim("IsHRDepPowerUser", user.IsHRDepPowerUser?.ToString() ?? "false")
-    };
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName!), // ใส่ Username ของผู้ใช้
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // สร้าง Unique Token ID
+                new Claim(ClaimTypes.Name, user.FullRealName ?? string.Empty), // ใส่ชื่อจริงของผู้ใช้
+                // new Claim("id", user.Id), // ID ของผู้ใช้ (ถูกคอมเมนต์ออก)
+                new Claim("IsFinancialDepPowerUser", user.IsFinancialDepPowerUser?.ToString() ?? "false"), // ตรวจสอบสิทธิ์ของผู้ใช้
+                new Claim("IsFinDepUser", user.IsFinDepUser?.ToString() ?? "false"),
+                new Claim("IsPlanDepPowerUser", user.IsPlanDepPowerUser?.ToString() ?? "false"),
+                new Claim("IsProcureDepPowerUser", user.IsProcureDepPowerUser?.ToString() ?? "false"),
+                new Claim("IsHRDepPowerUser", user.IsHRDepPowerUser?.ToString() ?? "false")
+            };
 
             // แปลงข้อมูลที่ซับซ้อนเป็น JSON ก่อนเพิ่มเข้า Claims
             if (user.HR_HRDepartmentPermission != null)
@@ -434,3 +436,7 @@ public static class HomeMainEndpoints
         return app;
     }
 }
+
+record LoginRequest(string username, string password);
+record LoginRespose(string userId, string username, string token);
+record RegisterRequest(string email, string username, string password, string givenName, string surname, string[] roles, string fullRealName, string positionName, string hrdepartmentName, int hrdepartmentId);

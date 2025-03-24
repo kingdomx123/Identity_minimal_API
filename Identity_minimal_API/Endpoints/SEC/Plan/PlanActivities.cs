@@ -1,7 +1,11 @@
-﻿using iLinkDomain.DataAccess.SEC.Plan;
+﻿using System.Net.Http;
+using System.Security.Claims;
+using System.Text.Json;
+using iLinkDomain.DataAccess.SEC.Plan;
 using iLinkDomain.Model.SEC.Plan;
 using iLinkDomain.Service.SEC.Plan;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Identity_minimal_API.Endpoints.SEC.Plan
@@ -10,7 +14,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
     {
         public static void MapSEC_PlanActivities_Endpoints(this WebApplication app, string connectionString)
         {
-            app.MapPost("/Endpoint/SEC/Plan/PlanActivities/PlanActivities_Create/{PlanCoreId}", [AllowAnonymous] (int PlanCoreId, PlanActivities_Create request) =>
+            app.MapPost("/Endpoint/SEC/Plan/PlanActivities/PlanActivities_Create/{PlanCoreId}", [AllowAnonymous] (HttpContext httpContext, int PlanCoreId, PlanActivities_Create request) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -38,18 +42,43 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     };
 
                     context.PlanActivities.Add(newPlanActivities);
+                    try { if (context.SaveChanges() <= 0) return Results.BadRequest("ไม่สามารถสร้างข้อมูลได้"); }
+                    catch (DbUpdateException ex) { return Results.BadRequest("ไม่สามารถสร้างข้อมูลได้: " + ex.InnerException?.Message); }
+                    context.SaveChanges();
 
+                    var user = httpContext.User;
+
+                    PlanActivityActionLog pActivityActionLog = new PlanActivityActionLog
+                    {
+                        ActionTypeEnum = 20,
+                        Name = new PlanActivityActionLog { ActionTypeEnum = 20 }.ActionTypeName, // ดึงค่า ActionTypeName
+                        Active = newPlanActivities.Active,
+                        StaffId = newPlanActivities.CreateByStaffId,
+                        ActionDate = DateTime.UtcNow,
+                        Ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "ไม่พบ",
+                        HostName = httpContext.Request.Headers["Host"].ToString() ?? "ไม่พบ",
+                        StaffName = user.FindFirst(ClaimTypes.Name)?.Value ?? "ไม่พบ", // ดึงชื่อจาก JWT Token
+                        ClientName = "",
+                        PlanActivityId = newPlanActivities.Id
+                    };
+
+                    context.PlanActivityActionLogs.Add(pActivityActionLog);
                     context.SaveChanges();
 
 
-                    return Results.Ok(new { Message = "สร้างข้อมูลกิจกรรมโครงการเสร็จสิ้น", newPlanActivities });
+                    return Results.Json(new { Message = "สร้างข้อมูลกิจกรรมโครงการเสร็จสิ้น", newPlanActivities },
+                    new JsonSerializerOptions
+                    {
+                        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+                        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                        WriteIndented = true
+                    });
                 }
-
             })
             .WithTags("PlanActivities")
             .WithGroupName("SEC_PlanActivitie");
 
-            app.MapPut("/Endpoint/SEC/Plan/PlanActivities/PlanActivities_Update/{id}", [AllowAnonymous] (int Id, PlanActivities_update request) =>
+            app.MapPut("/Endpoint/SEC/Plan/PlanActivities/PlanActivities_Update/{id}", [AllowAnonymous] (HttpContext httpContext, int Id, PlanActivities_update request) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -71,9 +100,36 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     existingPlanActivity.FundCategoryEnum = request.planActivities_Create.FundCategoryEnum;
                     existingPlanActivity.Weight = request.planActivities_Create.Weight;
 
+                    try { if (context.SaveChanges() <= 0) return Results.BadRequest("ไม่สามารถแก้ไขข้อมูลได้"); }
+                    catch (DbUpdateException ex) { return Results.BadRequest("ไม่สามารถแก้ไขข้อมูลได้: " + ex.InnerException?.Message); }
                     context.SaveChanges();
 
-                    return Results.Ok(new { Message = "อัปเดตกิจกรรมโครงการเสร็จสิ้น", existingPlanActivity });
+                    var user = httpContext.User;
+
+                    PlanActivityActionLog pActivityActionLog = new PlanActivityActionLog
+                    {
+                        ActionTypeEnum = 20,
+                        Name = new PlanActivityActionLog { ActionTypeEnum = 20 }.ActionTypeName, // ดึงค่า ActionTypeName
+                        Active = existingPlanActivity.Active,
+                        StaffId = existingPlanActivity.CreateByStaffId,
+                        ActionDate = DateTime.UtcNow,
+                        Ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "ไม่พบ",
+                        HostName = httpContext.Request.Headers["Host"].ToString() ?? "ไม่พบ",
+                        StaffName = user.FindFirst(ClaimTypes.Name)?.Value ?? "ไม่พบ", // ดึงชื่อจาก JWT Token
+                        ClientName = "",
+                        PlanActivityId = existingPlanActivity.Id
+                    };
+
+                    context.PlanActivityActionLogs.Add(pActivityActionLog);
+                    context.SaveChanges();
+
+                    return Results.Json(new { Message = "อัปเดตกิจกรรมโครงการเสร็จสิ้น", existingPlanActivity },
+                    new JsonSerializerOptions
+                    {
+                        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+                        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                        WriteIndented = true
+                    });
                 }
             })
             .WithTags("PlanActivities")
@@ -101,7 +157,7 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             .WithTags("PlanActivities")
             .WithGroupName("SEC_PlanActivitie");
 
-            app.MapGet("/Endpoint/SEC/Plan/PlanActivities/PlanActivities_GetData/{PlanCoreId}", [AllowAnonymous] (int PlanCoreId) =>
+            app.MapGet("/Endpoint/SEC/Plan/PlanActivities/PlanActivities_GetData/{PlanCoreId}", [AllowAnonymous] (HttpContext httpContext, int PlanCoreId) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -133,8 +189,30 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
 
                     if (!Planactv.Any())
                     {
-                        return Results.NotFound("ไม่พบข้อมูลโครงการ");
+                        return Results.NotFound("ไม่พบข้อมูลกิจกรรในโครงการ");
                     }
+
+                    // ดึงข้อมูลผู้ใช้งานจาก Token
+                    var user = httpContext.User;
+                    string staffName = user.FindFirst(ClaimTypes.Name)?.Value ?? "ไม่พบ";
+
+                    // บันทึกการเข้าถึงข้อมูลลงใน Log
+                    PlanActivityActionLog pActivityActionLog = new PlanActivityActionLog
+                    {
+                        ActionTypeEnum = 5, // ประเภทของการกระทำ (ดูข้อมูล)
+                        Name = new PlanActivityActionLog { ActionTypeEnum = 5 }.ActionTypeName, // ดึงค่า ActionTypeName
+                        Active = PlanActivitie.Active, // ใช้ PlanItem ที่หาเจอ
+                        StaffId = PlanActivitie.CreateByStaffId,
+                        ActionDate = DateTime.UtcNow,
+                        Ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "ไม่พบ",
+                        HostName = httpContext.Request.Headers["Host"].ToString() ?? "ไม่พบ",
+                        StaffName = staffName, // ดึงชื่อจาก JWT Token
+                        ClientName = "",
+                        PlanActivityId = PlanActivitie.Id
+                    };
+
+                    context.PlanActivityActionLogs.Add(pActivityActionLog);
+                    context.SaveChanges();
 
                     return Results.Ok(Planactv);
 

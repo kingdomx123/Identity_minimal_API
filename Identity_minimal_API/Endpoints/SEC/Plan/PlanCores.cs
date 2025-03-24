@@ -1,9 +1,11 @@
-﻿using System.Linq;
+﻿using System.Text.Json;
+using System.Security.Claims;
 using iLinkDomain.DataAccess.SEC.Plan;
 using iLinkDomain.Model.SEC.Plan;
 using iLinkDomain.Service.SEC.Plan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace Identity_minimal_API.Endpoints.SEC.Plan
 {
@@ -11,10 +13,32 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
     {
         public static void MapSEC_PlanCores_Endpoints(this WebApplication app, string connectionString)
         {
-            app.MapPost("/Endpoint/SEC/Plan/PlanCore/CreatePlanCore", [AllowAnonymous] (PlanCoreRequestMain request) =>
+            app.MapPost("/Endpoint/SEC/Plan/PlanCore/CreatePlanCore", (HttpContext httpContext, PlanCoreRequestMain request) =>
             {
+                var user = httpContext.User;
+
+                // ✅ เช็คว่า User ได้เข้าสู่ระบบหรือไม่
+                if (!user.Identity?.IsAuthenticated ?? false)
+                {
+                    return Results.Unauthorized();
+                }
+
+                // ✅ ดึงค่า Claims ที่กำหนดไว้ใน JWT
+                var isPlanPowerUser = user.Claims.FirstOrDefault(c => c.Type == "IsPlanDepPowerUser")?.Value == "true";
+                //var isHRPowerUser = user.Claims.FirstOrDefault(c => c.Type == "IsHRDepPowerUser")?.Value == "true";
+                //var isAdmin = user.Claims.FirstOrDefault(c => c.Type == "IsAdmin")?.Value == "true";
+
+                // ✅ กำหนดเงื่อนไขการเข้าถึง
+                if (!isPlanPowerUser)
+                {
+                    return Results.Forbid();
+                }
+
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
+                    if (string.IsNullOrWhiteSpace(request.Name) || request.FiscalYear <= 0)
+                        return Results.BadRequest("กรุณากรอกข้อมูลให้ครบถ้วน");
+
                     var newPlancore = new PlanCore
                     {
                         Name = request.Name,
@@ -59,20 +83,64 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     };
 
                     context.PlanCores.Add(newPlancore);
-
+                    try { if (context.SaveChanges() <= 0) return Results.BadRequest("ไม่สามารถสร้างข้อมูลได้"); }
+                    catch (DbUpdateException ex) { return Results.BadRequest("ไม่สามารถสร้างข้อมูลได้: " + ex.InnerException?.Message); }
                     context.SaveChanges();
 
+                    // สร้างและกำหนดค่าให้ PlanCoreActionLog ทีละบรรทัด
+                    PlanCoreActionLog pCoreActionLog = new PlanCoreActionLog
+                    {
+                        ActionTypeEnum = 20, // ประเภทของการกระทำ (พิมพ์/ดูเอกสาร)
+                        Name = new PlanCoreActionLog { ActionTypeEnum = 20 }.ActionTypeName, // ดึงค่า ActionTypeName
+                        Active = newPlancore.Active,
+                        StaffId = newPlancore.CreateByStaffId,
+                        ActionDate = DateTime.UtcNow,
+                        Ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "ไม่พบ",
+                        HostName = httpContext.Request.Headers["Host"].ToString() ?? "ไม่พบ",
+                        StaffName = user.FindFirst(ClaimTypes.Name)?.Value ?? "ไม่พบ", // ดึงชื่อจาก JWT Token
+                        ClientName = "",
+                        PlanCoreId = newPlancore.Id
+                    };
 
-                    return Results.Ok(new { Message = "สร้างข้อมูลโครงสร้างเสร็จสิ้น", newPlancore });
-                }
+                    // บันทึกข้อมูลลงฐานข้อมูล
+                    context.PlanCoreActionLogs.Add(pCoreActionLog);
+                    context.SaveChanges();
+
+                    return Results.Json(new { Message = "สร้างข้อมูลโครงสร้างเสร็จสิ้น", newPlancore },
+                    new JsonSerializerOptions
+                    {
+                        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+                        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                        WriteIndented = true
+                    });
+                    }
             })
             .WithTags("PlanCore")
             .WithGroupName("SEC_PlanCore");
 
-            app.MapPut("/Endpoint/SEC/Plan/PlanCore/UpdatePlanCore/{id}", [AllowAnonymous] (int id, PlanCoreRequestMain request) =>
+            app.MapPut("/Endpoint/SEC/Plan/PlanCore/UpdatePlanCore/{id}", [AllowAnonymous] (HttpContext httpContext, int id, PlanCoreRequestMain request) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
+                    var user = httpContext.User;
+
+                    // ✅ เช็คว่า User ได้เข้าสู่ระบบหรือไม่
+                    if (!user.Identity?.IsAuthenticated ?? false)
+                    {
+                        return Results.Unauthorized();
+                    }
+
+                    // ✅ ดึงค่า Claims ที่กำหนดไว้ใน JWT
+                    var isPlanPowerUser = user.Claims.FirstOrDefault(c => c.Type == "IsPlanDepPowerUser")?.Value == "true";
+                    //var isHRPowerUser = user.Claims.FirstOrDefault(c => c.Type == "IsHRDepPowerUser")?.Value == "true";
+                    //var isAdmin = user.Claims.FirstOrDefault(c => c.Type == "IsAdmin")?.Value == "true";
+
+                    // ✅ กำหนดเงื่อนไขการเข้าถึง
+                    if (!isPlanPowerUser)
+                    {
+                        return Results.Forbid();
+                    }
+
                     var existingPlan = context.PlanCores.FirstOrDefault(c => c.Id == id);
                     if (existingPlan == null)
                     {
@@ -117,7 +185,25 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     existingPlan.TotalYearlyBudget = request.TotalYearlyBudget;
                     existingPlan.FundTypeId = request.FundTypeId;
 
+                    try { if (context.SaveChanges() <= 0) return Results.BadRequest("ไม่สามารถแก้ไขข้อมูลได้"); }
+                    catch (DbUpdateException ex) { return Results.BadRequest("ไม่สามารถแก้ไขข้อมูลได้: " + ex.InnerException?.Message); }
+                    context.SaveChanges();
 
+                    PlanCoreActionLog pCoreActionLog = new PlanCoreActionLog()
+                    {
+                        ActionTypeEnum = 20,
+                        Name = new PlanActivityActionLog { ActionTypeEnum = 20 }.ActionTypeName, // ดึงค่า ActionTypeName
+                        Active = existingPlan.Active,
+                        StaffId = existingPlan.CreateByStaffId,
+                        ActionDate = DateTime.UtcNow,
+                        Ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "ไม่พบ",
+                        HostName = httpContext.Request.Headers["Host"].ToString() ?? "ไม่พบ",
+                        StaffName = user.FindFirst(ClaimTypes.Name)?.Value ?? "ไม่พบ", // ดึงชื่อจาก JWT Token
+                        ClientName = "",
+                        PlanCoreId = existingPlan.Id
+                    };
+
+                    context.PlanCoreActionLogs.Add(pCoreActionLog);
                     context.SaveChanges();
 
 
@@ -127,10 +213,29 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
             .WithTags("PlanCore")
             .WithGroupName("SEC_PlanCore");
 
-            app.MapDelete("/Endpoint/SEC/Plan/PlanCore/DeletePlanCore/{id}", [AllowAnonymous] (int id) =>
+            app.MapDelete("/Endpoint/SEC/Plan/PlanCore/DeletePlanCore/{id}", [AllowAnonymous] (HttpContext httpContext, int id) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
+                    var user = httpContext.User;
+
+                    // ✅ เช็คว่า User ได้เข้าสู่ระบบหรือไม่
+                    if (!user.Identity?.IsAuthenticated ?? false)
+                    {
+                        return Results.Unauthorized();
+                    }
+
+                    // ✅ ดึงค่า Claims ที่กำหนดไว้ใน JWT
+                    var isPlanPowerUser = user.Claims.FirstOrDefault(c => c.Type == "IsPlanDepPowerUser")?.Value == "true";
+                    //var isHRPowerUser = user.Claims.FirstOrDefault(c => c.Type == "IsHRDepPowerUser")?.Value == "true";
+                    //var isAdmin = user.Claims.FirstOrDefault(c => c.Type == "IsAdmin")?.Value == "true";
+
+                    // ✅ กำหนดเงื่อนไขการเข้าถึง
+                    if (!isPlanPowerUser)
+                    {
+                        return Results.Forbid();
+                    }
+
                     PlanCoreService plancoreService = new PlanCoreService(context);
 
                     var plancores = context.PlanCores.FirstOrDefault(c => c.Id == id);
@@ -144,13 +249,125 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     context.SaveChanges();
 
 
-                    return Results.Ok(new { Message = "ลบข้อมูลโครงการเสร็จสิ้น" });
+                    return Results.Json(new { Message = "ลบข้อมูลโครงการเสร็จสิ้น" },
+                    new JsonSerializerOptions
+                    {
+                        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+                        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                        WriteIndented = true
+                    });
                 }
             })
             .WithTags("PlanCore")
             .WithGroupName("SEC_PlanCore");
 
-            app.MapGet("/Endpoint/SEC/Plan/PlanCore/ShowPlanCore/{FiscalYear}/{DepartmentId}", [AllowAnonymous] (int FiscalYear, int DepartmentId) =>
+            app.MapGet("/Endpoint/SEC/Plan/PlanCore/ShowPlanCoresd/{FiscalYear}/{DepartmentId}", (HttpContext httpContext, int FiscalYear, int DepartmentId) =>
+            {
+                using (PlanDbContext context = new PlanDbContext(connectionString))
+                {
+                    var user = httpContext.User;
+                    var listNumbersClaim = user.FindFirst("ListNumbers")?.Value;
+
+                    if (string.IsNullOrEmpty(listNumbersClaim))
+                    {
+                        return Results.Forbid(); // ไม่มีสิทธิ์เข้าถึง
+                    }
+
+                    // Deserialize JSON เป็น List<Tuple<int, List<int>>>
+                    var allowedFiscalYearsAndDepartments = JsonSerializer.Deserialize<List<Tuple<int, List<int>>>>(listNumbersClaim);
+
+                    // ตรวจสอบว่าผู้ใช้สามารถเข้าถึงปีงบประมาณและหน่วยงานที่ร้องขอได้หรือไม่
+                    bool isAuthorized = allowedFiscalYearsAndDepartments!.Any(tuple =>
+                        tuple.Item1 == FiscalYear && tuple.Item2.Contains(DepartmentId));
+
+                    if (!isAuthorized)
+                    {
+                        return Results.Forbid(); // ไม่มีสิทธิ์เข้าถึง
+                    }
+
+                    var plancore = context.PlanCores.FirstOrDefault(c => c.FiscalYear == FiscalYear && c.DepartmentId == DepartmentId);
+                    if (plancore == null)
+                    {
+                        return Results.NotFound("ไม่พบปีงบประมาณและหน่วยงานที่ต้องการ");
+                    }
+
+                    PlanCoreService plancoreService = new PlanCoreService(context);
+                    var plancores = plancoreService.DbSet()
+                        .Where(c => c.FiscalYear == FiscalYear && c.DepartmentId == DepartmentId)
+                        .Select(c => new
+                        {
+                            Id = c.Id,
+                            Name = c.Name,
+                            FiscalYear = c.FiscalYear,
+                            Code = c.Code,
+                            Active = c.Active,
+                            DepartmentId = c.DepartmentId,
+                            PlanTypeId = c.PlanTypeId,
+                            Detail = c.Detail,
+                            Objective = c.Objective,
+                            Benefit = c.Benefit,
+                            PlanCategoryEnum = c.PlanCategoryEnum,
+                            CreateDate = c.CreateDate,
+                            CreateByStaffId = c.CreateByStaffId,
+                            IsApproved = c.IsApproved,
+                            CodeNumber = c.CodeNumber,
+                            ProjectDuration = c.ProjectDuration,
+                            MonthStart = c.MonthStart,
+                            MonthEnd = c.MonthEnd,
+                            OtherTarget = c.OtherTarget,
+                            OpFormDocNumber = c.OpFormDocNumber,
+                            OpFormDepName = c.OpFormDepName,
+                            OpFormDepTel = c.OpFormDepTel,
+                            OpFormLocation = c.OpFormLocation,
+                            OpFormRequester = c.OpFormRequester,
+                            OpFormRequesterPosition = c.OpFormRequesterPosition,
+                            OpFormWriteDate = c.OpFormWriteDate,
+                            Output = c.Output,
+                            OpFormInform = c.OpFormInform,
+                            IsControlByPlanCoreCode = c.IsControlByPlanCoreCode,
+                            IsSent = c.IsSent,
+                            DateStart = c.DateStart,
+                            DateEnd = c.DateEnd,
+                            OpFormRequesterStaffId = c.OpFormRequesterStaffId,
+                            OpFormRequestDepartmentId = c.OpFormRequestDepartmentId,
+                            DepStrategy = c.DepStrategy,
+                            DepStrategyIndicator = c.DepStrategyIndicator,
+                            DepPerformanceIndicator = c.DepPerformanceIndicator,
+                        })
+                        .Take(100)
+                        .ToList();
+
+                    if (!plancores.Any())
+                    {
+                        return Results.NotFound("ไม่พบข้อมูลโครงการ");
+                    }
+
+                    //var user = httpContext.User;
+
+                    PlanCoreActionLog pCoreActionLog = new PlanCoreActionLog()
+                    {
+                        ActionTypeEnum = 5,
+                        Name = new PlanActivityActionLog { ActionTypeEnum = 5 }.ActionTypeName, // ดึงค่า ActionTypeName
+                        Active = plancore.Active,
+                        StaffId = plancore.CreateByStaffId,
+                        ActionDate = DateTime.UtcNow,
+                        Ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "ไม่พบ",
+                        HostName = httpContext.Request.Headers["Host"].ToString() ?? "ไม่พบ",
+                        StaffName = user.FindFirst(ClaimTypes.Name)?.Value ?? "ไม่พบ", // ดึงชื่อจาก JWT Token
+                        ClientName = "",
+                        PlanCoreId = plancore.Id
+                    };
+
+                    context.PlanCoreActionLogs.Add(pCoreActionLog);
+                    context.SaveChanges();
+
+                    return Results.Ok(plancores);
+                }
+            })
+            .WithTags("PlanCore")
+            .WithGroupName("SEC_PlanCore");
+
+            app.MapGet("/Endpoint/SEC/Plan/PlanCore/ShowPlanCore/{FiscalYear}/{DepartmentId}", [Authorize(Policy = "PlanCoreAccess")] (HttpContext httpContext, int FiscalYear, int DepartmentId) =>
             {
                 using (PlanDbContext context = new PlanDbContext(connectionString))
                 {
@@ -210,6 +427,25 @@ namespace Identity_minimal_API.Endpoints.SEC.Plan
                     {
                         return Results.NotFound("ไม่พบข้อมูลโครงการ");
                     }
+
+                    var user = httpContext.User;
+
+                    PlanCoreActionLog pCoreActionLog = new PlanCoreActionLog()
+                    {
+                        ActionTypeEnum = 5,
+                        Name = new PlanActivityActionLog { ActionTypeEnum = 5 }.ActionTypeName, // ดึงค่า ActionTypeName
+                        Active = plancore.Active,
+                        StaffId = plancore.CreateByStaffId,
+                        ActionDate = DateTime.UtcNow,
+                        Ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "ไม่พบ",
+                        HostName = httpContext.Request.Headers["Host"].ToString() ?? "ไม่พบ",
+                        StaffName = user.FindFirst(ClaimTypes.Name)?.Value ?? "ไม่พบ", // ดึงชื่อจาก JWT Token
+                        ClientName = "",
+                        PlanCoreId = plancore.Id
+                    };
+
+                    context.PlanCoreActionLogs.Add(pCoreActionLog);
+                    context.SaveChanges();
 
                     return Results.Ok(plancores);
                 }
